@@ -1,17 +1,19 @@
 " MY .vimrc SECTIONS
 " ==================
-" 1. The default vimrc file, copied verbatim + modified where commented
-" 2. Some random additions from different sources (as noted)
-" 3. The python-mode (i.e., pymode plugin) additions
-" 4. Functions
-" 5. Airline (i.e., airline plugin) settings/overrides
-" 6. Commenting code
+" 01. The default vimrc file, copied verbatim + modified where commented
+" 02. Some random additions from different sources (as noted)
+" 03. Functions
+" 04. vimplug 
+" ...
+" 11. Airline (i.e., airline plugin) settings/overrides
+" 12. The python-mode (i.e., pymode plugin) additions
 
 
 " =====================================================================
-" ================================= 1 =================================
+" ================================ 01 =================================
 " =====================================================================
-" The default vimrc file.
+"
+" >>> The default vimrc file (modified) <<
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
 " Last change:	2020 Sep 30
@@ -156,8 +158,11 @@ endif
 
 
 " =====================================================================
-" ================================= 2 =================================
+" ================================ 02 =================================
 " =====================================================================
+"
+" >>> Miscellaneous customisations <<<
+"
 " Selected .vimrc from https://vim.fandom.com/wiki/Example_vimrc
 "
 " Highlight searches (use <C-L> to temporarily turn off highlighting; see the
@@ -226,9 +231,180 @@ inoremap <leader><leader> <Esc><Esc><right>
 vnoremap <leader><leader> <Esc><Esc><right>
 nmap <leader>p :!pwd<CR>
 
+
 " =====================================================================
-" ================================= 3 =================================
+" ================================ 03 =================================
 " =====================================================================
+"
+" >>> Functions <<<
+" NB: the recommendation to add 'abort' after each so that
+" if something goes wrong Vim will not try to run the whole function, as 
+" recommended by the Reddit vimrctips.
+"
+":call GenerateUnicode(0x9900,0x9fff) 
+function! GenerateUnicode(first, last) abort
+  let i = a:first
+  while i <= a:last
+    if (i%256 == 0)
+      $put ='----------------------------------------------------'
+      $put ='     0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F '
+      $put ='----------------------------------------------------'
+    endif
+    let c = printf('%04X ', i)
+    for j in range(16)
+      let c = c . nr2char(i) . ' '
+      let i += 1
+    endfor
+    $put =c
+  endwhile
+endfunction
+
+" --------------------------------------------------------------------
+" Commenting code
+" From source in
+" https://stackoverflow.com/questions/1676632/whats-a-quick-way-to-comment-uncomment-lines-in-vim
+let s:comment_map = { 
+    \   "c": '\/\/',
+    \   "cpp": '\/\/',
+    \   "go": '\/\/',
+    \   "java": '\/\/',
+    \   "javascript": '\/\/',
+    \   "lua": '--',
+    \   "scala": '\/\/',
+    \   "php": '\/\/',
+    \   "python": '#',
+    \   "ruby": '#',
+    \   "rust": '\/\/',
+    \   "sh": '#',
+    \   "desktop": '#',
+    \   "fstab": '#',
+    \   "conf": '#',
+    \   "profile": '#',
+    \   "bashrc": '#',
+    \   "bash_profile": '#',
+    \   "mail": '>',
+    \   "eml": '>',
+    \   "bat": 'REM',
+    \   "ahk": ';',
+    \   "vim": '"',
+    \   "tex": '%',
+    \ }
+
+function! ToggleComment() abort
+    if has_key(s:comment_map, &filetype)
+        let comment_leader = s:comment_map[&filetype]
+        if getline('.') =~ "^\\s*" . comment_leader . " " 
+            " Uncomment the line
+            execute "silent s/^\\(\\s*\\)" . comment_leader . " /\\1/"
+        else 
+            if getline('.') =~ "^\\s*" . comment_leader
+                " Uncomment the line
+                execute "silent s/^\\(\\s*\\)" . comment_leader . "/\\1/"
+            else
+                " Comment the line
+                execute "silent s/^\\(\\s*\\)/\\1" . comment_leader . " /"
+            end
+        end
+    else
+        echo "No comment leader found for filetype"
+    end
+endfunction
+
+nnoremap <leader><Space> :call ToggleComment()<cr>
+vnoremap <leader><Space> :call ToggleComment()<cr>
+
+" --------------------------------------------------------------------
+
+
+
+" =====================================================================
+" ================================ 04 =================================
+" =====================================================================
+"
+call plug#begin() 
+
+Plug 'https://github.com/kennypete/vim-airline.git' 
+Plug 'https://github.com/kennypete/vim-airline-themes.git'
+Plug 'https://github.com/python-mode/python-mode.git'
+
+call plug#end()
+
+
+" =====================================================================
+" ================================ 11 =================================
+" =====================================================================
+"
+" PLUGIN >>> airline <<<
+"
+let g:airline_theme='ansi_focus'
+let g:airline_section_warning = ""
+let g:airline_mode_map_codes = 0
+" mode map overrides 
+if g:airline_mode_map_codes != 1
+    " overrides modes' display (entering by <C-v><C-{char}>)
+    let g:airline_mode_map = {
+        \ 'niV' : 'VIRTUAL REPLACE (NORMAL)',
+        \ 'V' : 'VISUAL LINE',
+        \ '' : 'VISUAL BLOCK',
+        \ 'S' : 'SELECT LINE',
+        \ '' : 'SELECT BLOCK',
+        \ 'ic' : 'INSERT COMPLETION GENERIC',
+        \ 'ix' : 'INSERT COMPLETION',
+        \ 'Rc' : 'REPLACE COMPLETION GENERIC',
+        \ 'Rv' : 'VIRTUAL REPLACE',
+        \ 'Rx' : 'REPLACE COMPLETION',
+        \ 'c' : 'COMMAND-LINE',
+        \ }
+else
+    let g:airline_mode_map = {
+        \ '' : '^S',
+        \ '' : '^V',
+        \ }
+endif  
+" let g:airline_left_sep='◤'
+
+"
+" Mode information
+"
+" --------------------------------------------------------------------------------------------------------------------------
+" Mode code | Mode displayed       | Airline            | How to get there and other info
+" --------------------------------------------------------------------------------------------------------------------------
+"     n     | {blank}              | NORMAL             | <Esc> from other modes; operator pendings too (no, nov, noV, no^V))
+"    no     | {blank}              | NORMAL             | Operator-pending mode
+"    nov    | {blank}              | NORMAL             | Operator-pending (forced characterwise |o_v|)
+"    noV    | {blank}              | NORMAL             | Operator-pending (forced linewise |o_V|)
+" no no^V | {blank}              | NORMAL             | Operator-pending (forced blockwise |o_|)
+"    niI    | (insert)             | INSERT (NORMAL)    | <C-o> from Insert mode
+"    niR    | (replace)            | REPLACE (NORMAL)   | <C-o> from Replace mode [airline error displayed INSERT v REPLACE]
+"    niV    | (vreplace)           | VREPLACE (NORMAL)  | <C-o> from Virtual Replace mode [airline error displayed INSERT v VISUAL]
+"     v     | VISUAL               | VISUAL             | v from Normal mode (or <C-g> to toggle from Select mode)
+"     v     | (insert) VISUAL ...  | VISUAL             | CTRL-O, v/V/<C-v>, or mouse select and drag from Insert mode
+"     V     | VISUAL LINE          | VISUAL LINE        | V from Normal mode (or <C-g> to toggle from Select Line mode)
+"    ^V   | VISUAL BLOCK         | VISUAL BLOCK       | <C-v> from Normal mode (or <C-g> to toggle from Select Block mode)
+"     s     | SELECT               | SELECT             | gh from Normal mode  (or <C-g> to toggle from Visual mode)
+"     S     | SELECT LINE          | SELECT LINE        | gH from Normal mode (or <C-g> to toggle from Select Line mode)
+"    ^S   | SELECT BLOCK         | SELECT BLOCK       | g<C-h> from Normal mode (or <C-g> to toggle from Visual Block mode)
+"     i     | INSERT               | INSERT             | i from Normal mode (or any of I a A o O c C s or S)
+"    ic     | Keyword completi...  | INSERT COMPLETION  | <C-n> or <C-p> from Insert mode (:help compl-generic)
+"    ix     | ^X mode (^]^D ...)   | INSERT COMPLETION  | <C-x> from Insert mode; this is 'Insert completion mode'
+"     R     | REPLACE              | REPLACE            | R from Normal mode 
+"    Rc     | Keyword completi...  | REPLACE COMPLETION | <C-n> or <C-p> from Replace mode (:help compl-generic)
+"    Rv     | VREPLACE             | VIRTUAL REPLACE    | gR from Normal mode ['useful for editing <Tab> separated columns'] 
+"    Rx     | ^X mode (^]^D ...)   | REPLACE COMPLETION | <C-x> from Replace mode; this is 'Replace completion mode'
+"     c     | {n/a - Command mode} | COMMAND            | : or / or ? ('Command' mode; can be a bit delayed appearing)   
+"    cv     | {n/a - Vim Ex mode}  | {mode you were in} | gQ to enter Vim Ex mode from Normal mode (or niI, niR, niV)
+"    ce     | {n/a - Ex mode}      | {mode you were in} | Q to enter Ex mode (if not remapped to gq as is commonly done)
+"     r     | {n/a - in a f/r}     | PROMPT             | :%s/find/replace/gc - e.g., after enter is pressed, 'replace with'
+"    rm     | {n/a - in a f/r}     | MORE               | 
+"    r?     | [Y]es, [N]o, [C]a... | {mode you were in} | :confirm q (etc.)
+"     t     | {n/a - Command mode} | TERMINAL           | :ter[minal] to open a new terminal (and <C-w><C-c> to exit it)   
+" --------------------------------------------------------------------------------------------------------------------------
+"
+" =====================================================================
+" ================================ 12 =================================
+" =====================================================================
+"
+" >> PYMODE <<
 "
 " 2. Common functionality ~ https://github.com/python-mode/python-mode/blob/develop/doc/pymode.txt#L77
 " Turn on the whole plugin. *'g:pymode'*
@@ -358,162 +534,4 @@ let g:pymode_syntax_highlight_exceptions = g:pymode_syntax_all
 
 " Highlight docstrings as pythonDocstring (otherwise as pythonString) *'g:pymode_syntax_docstrings'*
 let g:pymode_syntax_docstrings = g:pymode_syntax_all
-
-
-" =====================================================================
-" ================================= 4 =================================
-" =====================================================================
-"
-" Functions: noting the recommendation to add 'abort' after each so that
-" if something goes wrong Vim will not try to run the whole function, as 
-" recommended by the Reddit vimrctips.
-"
-":call GenerateUnicode(0x9900,0x9fff) 
-function! GenerateUnicode(first, last) abort
-  let i = a:first
-  while i <= a:last
-    if (i%256 == 0)
-      $put ='----------------------------------------------------'
-      $put ='     0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F '
-      $put ='----------------------------------------------------'
-    endif
-    let c = printf('%04X ', i)
-    for j in range(16)
-      let c = c . nr2char(i) . ' '
-      let i += 1
-    endfor
-    $put =c
-  endwhile
-endfunction
-
-
-" =====================================================================
-" ================================= 5 =================================
-" =====================================================================
-"
-" Airline settings:
-"
-let g:airline_theme='ansi_focus'
-let g:airline_section_warning = ""
-let g:airline_mode_map_codes = 0
-" mode map overrides 
-if g:airline_mode_map_codes != 1
-    " overrides modes' display (entering by <C-v><C-{char}>)
-    let g:airline_mode_map = {
-        \ 'niV' : 'VIRTUAL REPLACE (NORMAL)',
-        \ 'V' : 'VISUAL LINE',
-        \ '' : 'VISUAL BLOCK',
-        \ 'S' : 'SELECT LINE',
-        \ '' : 'SELECT BLOCK',
-        \ 'ic' : 'INSERT COMPLETION GENERIC',
-        \ 'ix' : 'INSERT COMPLETION',
-        \ 'Rc' : 'REPLACE COMPLETION GENERIC',
-        \ 'Rv' : 'VIRTUAL REPLACE',
-        \ 'Rx' : 'REPLACE COMPLETION',
-        \ 'c' : 'COMMAND-LINE',
-        \ }
-else
-    let g:airline_mode_map = {
-        \ '' : '^S',
-        \ '' : '^V',
-        \ }
-endif  
-" let g:airline_left_sep='◤'
-
-" =====================================================================
-" ================================ 99 =================================
-" =====================================================================
-"
-" Mode information
-"
-" --------------------------------------------------------------------------------------------------------------------------
-" Mode code | Mode displayed       | Airline            | How to get there and other info
-" --------------------------------------------------------------------------------------------------------------------------
-"     n     | {blank}              | NORMAL             | <Esc> from other modes; operator pendings too (no, nov, noV, no^V))
-"    no     | {blank}              | NORMAL             | Operator-pending mode
-"    nov    | {blank}              | NORMAL             | Operator-pending (forced characterwise |o_v|)
-"    noV    | {blank}              | NORMAL             | Operator-pending (forced linewise |o_V|)
-" no no^V | {blank}              | NORMAL             | Operator-pending (forced blockwise |o_|)
-"    niI    | (insert)             | INSERT (NORMAL)    | <C-o> from Insert mode
-"    niR    | (replace)            | REPLACE (NORMAL)   | <C-o> from Replace mode [airline error displayed INSERT v REPLACE]
-"    niV    | (vreplace)           | VREPLACE (NORMAL)  | <C-o> from Virtual Replace mode [airline error displayed INSERT v VISUAL]
-"     v     | VISUAL               | VISUAL             | v from Normal mode (or <C-g> to toggle from Select mode)
-"     v     | (insert) VISUAL ...  | VISUAL             | CTRL-O, v/V/<C-v>, or mouse select and drag from Insert mode
-"     V     | VISUAL LINE          | VISUAL LINE        | V from Normal mode (or <C-g> to toggle from Select Line mode)
-"    ^V   | VISUAL BLOCK         | VISUAL BLOCK       | <C-v> from Normal mode (or <C-g> to toggle from Select Block mode)
-"     s     | SELECT               | SELECT             | gh from Normal mode  (or <C-g> to toggle from Visual mode)
-"     S     | SELECT LINE          | SELECT LINE        | gH from Normal mode (or <C-g> to toggle from Select Line mode)
-"    ^S   | SELECT BLOCK         | SELECT BLOCK       | g<C-h> from Normal mode (or <C-g> to toggle from Visual Block mode)
-"     i     | INSERT               | INSERT             | i from Normal mode (or any of I a A o O c C s or S)
-"    ic     | Keyword completi...  | INSERT COMPLETION  | <C-n> or <C-p> from Insert mode (:help compl-generic)
-"    ix     | ^X mode (^]^D ...)   | INSERT COMPLETION  | <C-x> from Insert mode; this is 'Insert completion mode'
-"     R     | REPLACE              | REPLACE            | R from Normal mode 
-"    Rc     | Keyword completi...  | REPLACE COMPLETION | <C-n> or <C-p> from Replace mode (:help compl-generic)
-"    Rv     | VREPLACE             | VIRTUAL REPLACE    | gR from Normal mode ['useful for editing <Tab> separated columns'] 
-"    Rx     | ^X mode (^]^D ...)   | REPLACE COMPLETION | <C-x> from Replace mode; this is 'Replace completion mode'
-"     c     | {n/a - Command mode} | COMMAND            | : or / or ? ('Command' mode; can be a bit delayed appearing)   
-"    cv     | {n/a - Vim Ex mode}  | {mode you were in} | gQ to enter Vim Ex mode from Normal mode (or niI, niR, niV)
-"    ce     | {n/a - Ex mode}      | {mode you were in} | Q to enter Ex mode (if not remapped to gq as is commonly done)
-"     r     | {n/a - in a f/r}     | PROMPT             | :%s/find/replace/gc - e.g., after enter is pressed, 'replace with'
-"    rm     | {n/a - in a f/r}     | MORE               | 
-"    r?     | [Y]es, [N]o, [C]a... | {mode you were in} | :confirm q (etc.)
-"     t     | {n/a - Command mode} | TERMINAL           | :ter[minal] to open a new terminal (and <C-w><C-c> to exit it)   
-" --------------------------------------------------------------------------------------------------------------------------
-"
-"
-" =====================================================================
-" ======================== 6. Commenting ==============================
-" =====================================================================
-" From source in
-" https://stackoverflow.com/questions/1676632/whats-a-quick-way-to-comment-uncomment-lines-in-vim
-let s:comment_map = { 
-    \   "c": '\/\/',
-    \   "cpp": '\/\/',
-    \   "go": '\/\/',
-    \   "java": '\/\/',
-    \   "javascript": '\/\/',
-    \   "lua": '--',
-    \   "scala": '\/\/',
-    \   "php": '\/\/',
-    \   "python": '#',
-    \   "ruby": '#',
-    \   "rust": '\/\/',
-    \   "sh": '#',
-    \   "desktop": '#',
-    \   "fstab": '#',
-    \   "conf": '#',
-    \   "profile": '#',
-    \   "bashrc": '#',
-    \   "bash_profile": '#',
-    \   "mail": '>',
-    \   "eml": '>',
-    \   "bat": 'REM',
-    \   "ahk": ';',
-    \   "vim": '"',
-    \   "tex": '%',
-    \ }
-
-function! ToggleComment()
-    if has_key(s:comment_map, &filetype)
-        let comment_leader = s:comment_map[&filetype]
-        if getline('.') =~ "^\\s*" . comment_leader . " " 
-            " Uncomment the line
-            execute "silent s/^\\(\\s*\\)" . comment_leader . " /\\1/"
-        else 
-            if getline('.') =~ "^\\s*" . comment_leader
-                " Uncomment the line
-                execute "silent s/^\\(\\s*\\)" . comment_leader . "/\\1/"
-            else
-                " Comment the line
-                execute "silent s/^\\(\\s*\\)/\\1" . comment_leader . " /"
-            end
-        end
-    else
-        echo "No comment leader found for filetype"
-    end
-endfunction
-
-nnoremap <leader><Space> :call ToggleComment()<cr>
-vnoremap <leader><Space> :call ToggleComment()<cr>
-
 
