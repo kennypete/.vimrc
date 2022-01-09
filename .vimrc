@@ -1,7 +1,7 @@
 " MY .vimrc SECTIONS
 " ==================
 " 01. The default vimrc file, copied verbatim + modified where commented
-" 02. Some random additions from different sources (as noted)
+" 02. Various additions from different sources (as noted)
 " 03. Functions
 " 04. vimplug 
 " ...
@@ -218,19 +218,18 @@ set smarttab
 set showmode
 
 " Map, without recursion, during Visual, Select and Insert modes
-" <leader><leader> to two Escape characters. This helps provide 
+" <leader><leader> to escape to Normal. This helps provide 
 " another option on the right side of the keyboard
 " key for Escape as well as ensuring, using a <right> to
-" return to the same cursor position.
+" return to the same cursor position (i.e., like a, not i).
 " The remapping of the 'arrow' keys is another common 
 " method, e.g., vnoremap jk <Esc><Esc>
 " but the delay (which can be avoided, that said) and
 " utility for a non-touch typist is not worth it IMHO.
 " (NB: Remapping Esc itself has unwanted side effects: don't) 
 " Mapping to a control escaped chr is entered with control-v in Insert mode
-inoremap <leader><leader> <Esc><Esc><right>
-vnoremap <leader><leader> <Esc><Esc><right>
-" nmap <leader>p :!pwd<CR>
+inoremap <leader><leader> <C-\><C-n><right>
+vnoremap <leader><leader> <C-\><C-n><right>
 
 " Common remapping of ; to : when in Normal mode to save having to Shift
 nnoremap ; :
@@ -270,7 +269,7 @@ endfunction
 map <leader>v :call CycleVirtualEdit()<CR>
 
 " When joining lines, only one space - NB: there is no true nospace option
-set nojoinspace
+set nojoinspaces
 
 
 " =====================================================================
