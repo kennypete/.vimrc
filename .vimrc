@@ -187,10 +187,10 @@ set number
 set numberwidth=3
 highlight LineNr term=bold cterm=NONE ctermfg=DarkGrey ctermbg=NONE gui=NONE guifg=DarkGrey guibg=NONE
 
-" Function and <leader>-l mapping for relative line number toggling (note
+" Function and <leader>l mapping for relative line number toggling (note
 " <leader> default is the \ key
 " Modified from https://tuckerchapman.com/2018/06/16/how-to-use-the-vim-leader-key/
-function! ToggleLineNumber()
+function! ToggleLineNumber() abort
   if v:version > 703
     set relativenumber!
   endif
@@ -213,7 +213,8 @@ set expandtab
 " recommendations (noting wildmenu already set by default)
 set smarttab
 
-" Show the mode you are on the last line.
+" Show the mode you are on the last line. A lot of folk turn this off
+" when using plugins like Airline, but I prefer it always on
 set showmode
 
 " Map, without recursion, during Visual, Select and Insert modes
@@ -225,11 +226,51 @@ set showmode
 " method, e.g., vnoremap jk <Esc><Esc>
 " but the delay (which can be avoided, that said) and
 " utility for a non-touch typist is not worth it IMHO.
-" (NB: Remapping Esc itself has unwanted side effects: don't!) 
+" (NB: Remapping Esc itself has unwanted side effects: don't) 
 " Mapping to a control escaped chr is entered with control-v in Insert mode
 inoremap <leader><leader> <Esc><Esc><right>
 vnoremap <leader><leader> <Esc><Esc><right>
-nmap <leader>p :!pwd<CR>
+" nmap <leader>p :!pwd<CR>
+
+" Common remapping of ; to : when in Normal mode to save having to Shift
+nnoremap ; :
+
+" Make the arrow keys work exclusively (down a wrapped text line) rather than
+"linewise 
+nnoremap <Down> gj
+nnoremap <Up> gk
+
+" Use the Control-S to act like any other text editor (Windows) where it saves
+" the file. 
+nnoremap <C-s> :w<CR>
+
+" Function and <leader>v mapping for virtual editing (refer :help
+" virtualedit), which can be used especially for editing tables such as
+" markdown when you effectively want to treat blank space as spaces.
+" They can be combined, e.g., block,onemore (not handled here) 
+set virtualedit=
+function! CycleVirtualEdit() abort
+  if &virtualedit == "all"
+      set virtualedit=block
+      echo 'virtualedit=block'
+  elseif &virtualedit == "block"
+      set virtualedit=insert
+      echo 'virtualedit=insert'
+  elseif &virtualedit == "insert"
+      set virtualedit=onemore
+      echo 'virtualedit=onemore'
+  elseif &virtualedit == "onemore"
+      set virtualedit=
+      echo 'virtualedit='
+  elseif &virtualedit == ""
+      set virtualedit=all
+      echo 'virtualedit=all'
+  endif
+endfunction
+map <leader>v :call CycleVirtualEdit()<CR>
+
+" When joining lines, only one space - NB: there is no true nospace option
+set nojoinspace
 
 
 " =====================================================================
