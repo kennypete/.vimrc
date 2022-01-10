@@ -406,39 +406,39 @@ endif
 "
 " Mode information
 "
-" --------------------------------------------------------------------------------------------------------------------------
-" Mode code | Mode displayed       | Airline            | How to get there and other info
-" --------------------------------------------------------------------------------------------------------------------------
-"     n     | {blank}              | NORMAL             | <Esc> from other modes; operator pendings too (no, nov, noV, no^V))
-"    no     | {blank}              | NORMAL             | Operator-pending mode
-"    nov    | {blank}              | NORMAL             | Operator-pending (forced characterwise |o_v|)
-"    noV    | {blank}              | NORMAL             | Operator-pending (forced linewise |o_V|)
-" no no^V | {blank}              | NORMAL             | Operator-pending (forced blockwise |o_|)
-"    niI    | (insert)             | INSERT (NORMAL)    | <C-o> from Insert mode
-"    niR    | (replace)            | REPLACE (NORMAL)   | <C-o> from Replace mode [airline error displayed INSERT v REPLACE]
-"    niV    | (vreplace)           | VREPLACE (NORMAL)  | <C-o> from Virtual Replace mode [airline error displayed INSERT v VISUAL]
-"     v     | VISUAL               | VISUAL             | v from Normal mode (or <C-g> to toggle from Select mode)
-"     v     | (insert) VISUAL ...  | VISUAL             | CTRL-O, v/V/<C-v>, or mouse select and drag from Insert mode
-"     V     | VISUAL LINE          | VISUAL LINE        | V from Normal mode (or <C-g> to toggle from Select Line mode)
-"    ^V   | VISUAL BLOCK         | VISUAL BLOCK       | <C-v> from Normal mode (or <C-g> to toggle from Select Block mode)
-"     s     | SELECT               | SELECT             | gh from Normal mode  (or <C-g> to toggle from Visual mode)
-"     S     | SELECT LINE          | SELECT LINE        | gH from Normal mode (or <C-g> to toggle from Select Line mode)
-"    ^S   | SELECT BLOCK         | SELECT BLOCK       | g<C-h> from Normal mode (or <C-g> to toggle from Visual Block mode)
-"     i     | INSERT               | INSERT             | i from Normal mode (or any of I a A o O c C s or S)
-"    ic     | Keyword completi...  | INSERT COMPLETION  | <C-n> or <C-p> from Insert mode (:help compl-generic)
-"    ix     | ^X mode (^]^D ...)   | INSERT COMPLETION  | <C-x> from Insert mode; this is 'Insert completion mode'
-"     R     | REPLACE              | REPLACE            | R from Normal mode 
-"    Rc     | Keyword completi...  | REPLACE COMPLETION | <C-n> or <C-p> from Replace mode (:help compl-generic)
-"    Rv     | VREPLACE             | VIRTUAL REPLACE    | gR from Normal mode ['useful for editing <Tab> separated columns'] 
-"    Rx     | ^X mode (^]^D ...)   | REPLACE COMPLETION | <C-x> from Replace mode; this is 'Replace completion mode'
-"     c     | {n/a - Command mode} | COMMAND            | : or / or ? ('Command' mode; can be a bit delayed appearing)   
-"    cv     | {n/a - Vim Ex mode}  | {mode you were in} | gQ to enter Vim Ex mode from Normal mode (or niI, niR, niV)
-"    ce     | {n/a - Ex mode}      | {mode you were in} | Q to enter Ex mode (if not remapped to gq as is commonly done)
-"     r     | {n/a - in a f/r}     | PROMPT             | :%s/find/replace/gc - e.g., after enter is pressed, 'replace with'
-"    rm     | {n/a - in a f/r}     | MORE               | 
-"    r?     | [Y]es, [N]o, [C]a... | {mode you were in} | :confirm q (etc.)
-"     t     | {n/a - Command mode} | TERMINAL           | :ter[minal] to open a new terminal (and <C-w><C-c> to exit it)   
-" --------------------------------------------------------------------------------------------------------------------------
+" -----------------------------------------------------------------------------------------------------
+" Mode code | Mode displayed       | How to get there and other info
+" -----------------------------------------------------------------------------------------------------
+"     n     | {blank}              | <Esc> from other modes; operator pendings too (no, nov, noV, no^V))
+"    no     | {blank}              | Operator-pending mode
+"    nov    | {blank}              | Operator-pending (forced characterwise |o_v|)
+"    noV    | {blank}              | Operator-pending (forced linewise |o_V|)
+" no no^V | {blank}              | Operator-pending (forced blockwise |o_|)
+"    niI    | (insert)             | <C-o> from Insert mode
+"    niR    | (replace)            | <C-o> from Replace mode
+"    niV    | (vreplace)           | <C-o> from Virtual Replace mode
+"     v     | VISUAL               | v from Normal mode (or <C-g> to toggle from Select mode)
+"     v     | (insert) VISUAL ...  | CTRL-O, v/V/<C-v>, or mouse select and drag from Insert mode
+"     V     | VISUAL LINE          | V from Normal mode (or <C-g> to toggle from Select Line mode)
+"    ^V   | VISUAL BLOCK         | <C-v> from Normal mode (or <C-g> to toggle from Select Block mode)
+"     s     | SELECT               | gh from Normal mode  (or <C-g> to toggle from Visual mode)
+"     S     | SELECT LINE          | gH from Normal mode (or <C-g> to toggle from Select Line mode)
+"    ^S   | SELECT BLOCK         | g<C-h> from Normal mode (or <C-g> to toggle from Visual Block mode)
+"     i     | INSERT               | i from Normal mode (or any of I a A o O c C s or S)
+"    ic     | Keyword completi...  | <C-n> or <C-p> from Insert mode (:help compl-generic)
+"    ix     | ^X mode (^]^D ...)   | <C-x> from Insert mode; this is 'Insert completion mode'
+"     R     | REPLACE              | R from Normal mode 
+"    Rc     | Keyword completi...  | <C-n> or <C-p> from Replace mode (:help compl-generic)
+"    Rv     | VREPLACE             | gR from Normal mode ['useful for editing <Tab> separated columns'] 
+"    Rx     | ^X mode (^]^D ...)   | <C-x> from Replace mode; this is 'Replace completion mode'
+"     c     | {n/a - Command mode} | : or / or ? ('Command' mode; can be a bit delayed appearing)   
+"    cv     | {n/a - Vim Ex mode}  | gQ to enter Vim Ex mode from Normal mode (or niI, niR, niV)
+"    ce     | {n/a - Ex mode}      | Q to enter Ex mode (if not remapped to gq as is commonly done)
+"     r     | {n/a - in a f/r}     | :%s/find/replace/gc - e.g., after enter is pressed, 'replace with'
+"    rm     | {n/a - in a f/r}     | 
+"    r?     | [Y]es, [N]o, [C]a... | :confirm q (etc.)
+"     t     | {n/a - Command mode} | :ter[minal] to open a new terminal (and <C-w><C-c> to exit it)   
+" -----------------------------------------------------------------------------------------------------
 "
 " =====================================================================
 " ================================ 12 =================================

@@ -1,5 +1,5 @@
 # .vimrc
-This is my .vimrc, kept updated. Vim will read a .vimrc symbolic link, so the easiest means to ensure a clean local repository is to have a "vimrc" folder in the same location as the .vimrc used by Vim.
+This is my .vimrc, kept updated. Vim will read a .vimrc symbolic link, so the easiest means to ensure a clean local repository is to have a "~/vimrc" folder (i.e., in the same location as the .vimrc used by Vim).
 
 ## sections
 I have split my .vimrc into sections:
@@ -7,7 +7,7 @@ I have split my .vimrc into sections:
 2. Various additions from different sources (as noted)
 3. Functions
 4. vimplug
-...
+5.-10. [Future]
 11. Airline (i.e., airline plugin) settings/overrides
 12. The python-mode (i.e., pymode plugin) additions
 
