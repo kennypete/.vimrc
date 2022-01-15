@@ -3,7 +3,7 @@
 " 01. The default vimrc file, copied verbatim + modified where commented
 " 02. Various additions from different sources (as noted)
 " 03. Functions
-" 04. vimplug 
+" 04. vimplug
 " ...
 " 11. Airline (i.e., airline plugin) settings/overrides
 " 12. The python-mode (i.e., pymode plugin) additions
@@ -15,8 +15,8 @@
 "
 " >>> The default vimrc file (modified) <<
 "
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2020 Sep 30
+" Maintainer: Bram Moolenaar <Bram@vim.org>
+" Last change: 2020 Sep 30
 "
 " This is loaded if no vimrc file was found.
 " Except when Vim is run with "-u NONE" or "-C".
@@ -50,13 +50,13 @@ silent! endwhile
 " Allow backspacing over everything in insert mode.
 set backspace=indent,eol,start
 
-set history=200		" keep 200 lines of command line history
-set ruler		" show the cursor position all the time
-set showcmd		" display incomplete commands
-set wildmenu		" display completion matches in a status line
+set history=200      " keep 200 lines of command line history
+set ruler            " show the cursor position all the time
+set showcmd          " display incomplete commands
+set wildmenu         " display completion matches in a status line
 
-set ttimeout		" time out for key codes
-set ttimeoutlen=100	" wait up to 100ms after Esc for special key
+set ttimeout         " time out for key codes
+set ttimeoutlen=100  " wait up to 100ms after Esc for special key
 
 " Show @@@ in the last line if it is truncated.
 set display=truncate
@@ -146,7 +146,7 @@ endif
 " Revert with: ":delcommand DiffOrig".
 if !exists(":DiffOrig")
   command DiffOrig vert new | set bt=nofile | r ++edit # | 0d_ | diffthis
-		  \ | wincmd p | diffthis
+    \ | wincmd p | diffthis
 endif
 
 if has('langmap') && exists('+langremap')
@@ -209,7 +209,7 @@ set shiftwidth=4
 set softtabstop=4
 set expandtab
 
-" https://github.com/tpope/vim-sensible/blob/master/plugin/sensible.vim 
+" https://github.com/tpope/vim-sensible/blob/master/plugin/sensible.vim
 " recommendations (noting wildmenu already set by default)
 set smarttab
 
@@ -218,35 +218,37 @@ set smarttab
 set showmode
 
 " Map, without recursion, during Visual, Select and Insert modes
-" <leader><leader> to escape to Normal. This helps provide 
+" <leader><leader> to escape to Normal. This helps provide
 " another option on the right side of the keyboard
 " key for Escape as well as ensuring, using a <right> to
 " return to the same cursor position (i.e., like a, not i).
-" The remapping of the 'arrow' keys is another common 
+" The remapping of the 'arrow' keys is another common
 " method, e.g., vnoremap jk <Esc><Esc>
 " but the delay (which can be avoided, that said) and
 " utility for a non-touch typist is not worth it IMHO.
-" (NB: Remapping Esc itself has unwanted side effects: don't) 
+" (NB: Remapping Esc itself has unwanted side effects: don't)
 " Mapping to a control escaped chr is entered with control-v in Insert mode
 inoremap <leader><leader> <C-\><C-n><right>
 vnoremap <leader><leader> <C-\><C-n><right>
+inoremap jk <C-\><C-n><right>
+vnoremap jk <C-\><C-n><right>
 
 " Common remapping of ; to : when in Normal mode to save having to Shift
 nnoremap ; :
 
 " Make the arrow keys work exclusively (down a wrapped text line) rather than
-"linewise 
+" linewise
 nnoremap <Down> gj
 nnoremap <Up> gk
 
 " Use the Control-S to act like any other text editor (Windows) where it saves
-" the file. 
+" the file.
 nnoremap <C-s> :w<CR>
 
 " Function and <leader>v mapping for virtual editing (refer :help
 " virtualedit), which can be used especially for editing tables such as
 " markdown when you effectively want to treat blank space as spaces.
-" They can be combined, e.g., block,onemore (not handled here) 
+" They can be combined, e.g., block,onemore (not handled here).
 set virtualedit=
 function! CycleVirtualEdit() abort
   if &virtualedit == "all"
@@ -271,6 +273,14 @@ map <leader>v :call CycleVirtualEdit()<CR>
 " When joining lines, only one space - NB: there is no true nospace option
 set nojoinspaces
 
+" Highlight line when in Insert mode as a key way to show you are in the mode
+set cursorlineopt=line
+autocmd InsertEnter,InsertLeave * set cursorline!
+
+" Highlight special characters, including nbsp and trailing spaces
+"  < non-breaking space | trailing space > 
+set list listchars=nbsp:°,trail:·
+highlight SpecialKey ctermbg=Yellow guibg=Yellow
 
 " =====================================================================
 " ================================ 03 =================================
@@ -278,10 +288,10 @@ set nojoinspaces
 "
 " >>> Functions <<<
 " NB: the recommendation to add 'abort' after each so that
-" if something goes wrong Vim will not try to run the whole function, as 
+" if something goes wrong Vim will not try to run the whole function, as
 " recommended by the Reddit vimrctips.
 "
-":call GenerateUnicode(0x9900,0x9fff) 
+":call GenerateUnicode(0x9900,0x9fff)
 function! GenerateUnicode(first, last) abort
   let i = a:first
   while i <= a:last
@@ -303,7 +313,7 @@ endfunction
 " Commenting code
 " From source in
 " https://stackoverflow.com/questions/1676632/whats-a-quick-way-to-comment-uncomment-lines-in-vim
-let s:comment_map = { 
+let s:comment_map = {
     \   "c": '\/\/',
     \   "cpp": '\/\/',
     \   "go": '\/\/',
@@ -333,10 +343,10 @@ let s:comment_map = {
 function! ToggleComment() abort
     if has_key(s:comment_map, &filetype)
         let comment_leader = s:comment_map[&filetype]
-        if getline('.') =~ "^\\s*" . comment_leader . " " 
+        if getline('.') =~ "^\\s*" . comment_leader . " "
             " Uncomment the line
             execute "silent s/^\\(\\s*\\)" . comment_leader . " /\\1/"
-        else 
+        else
             if getline('.') =~ "^\\s*" . comment_leader
                 " Uncomment the line
                 execute "silent s/^\\(\\s*\\)" . comment_leader . "/\\1/"
@@ -361,11 +371,13 @@ vnoremap <leader><Space> :call ToggleComment()<cr>
 " ================================ 04 =================================
 " =====================================================================
 "
-call plug#begin() 
+call plug#begin()
 
-Plug 'https://github.com/kennypete/vim-airline.git' 
+Plug 'https://github.com/kennypete/vim-airline.git'
 Plug 'https://github.com/kennypete/vim-airline-themes.git'
-Plug 'https://github.com/python-mode/python-mode.git'
+" Plug 'https://github.com/itchyny/lightline.vim'
+" Consider migrating to lightline, however, check it handles as well/extend it
+Plug 'https://github.com/python-mode/python-mode.git', { 'for': 'python' }
 
 call plug#end()
 
@@ -379,7 +391,7 @@ call plug#end()
 let g:airline_theme='ansi_focus'
 let g:airline_section_warning = ""
 let g:airline_mode_map_codes = 0
-" mode map overrides 
+" mode map overrides
 if g:airline_mode_map_codes != 1
     " overrides modes' display (entering by <C-v><C-{char}>)
     let g:airline_mode_map = {
@@ -400,8 +412,8 @@ else
         \ '' : '^S',
         \ '' : '^V',
         \ }
-endif  
-" let g:airline_left_sep='◤'
+endif
+let g:airline_left_sep='◤'
 
 "
 " Mode information
@@ -427,17 +439,17 @@ endif
 "     i     | INSERT               | i from Normal mode (or any of I a A o O c C s or S)
 "    ic     | Keyword completi...  | <C-n> or <C-p> from Insert mode (:help compl-generic)
 "    ix     | ^X mode (^]^D ...)   | <C-x> from Insert mode; this is 'Insert completion mode'
-"     R     | REPLACE              | R from Normal mode 
+"     R     | REPLACE              | R from Normal mode
 "    Rc     | Keyword completi...  | <C-n> or <C-p> from Replace mode (:help compl-generic)
-"    Rv     | VREPLACE             | gR from Normal mode ['useful for editing <Tab> separated columns'] 
+"    Rv     | VREPLACE             | gR from Normal mode ['useful for editing <Tab> separated columns']
 "    Rx     | ^X mode (^]^D ...)   | <C-x> from Replace mode; this is 'Replace completion mode'
-"     c     | {n/a - Command mode} | : or / or ? ('Command' mode; can be a bit delayed appearing)   
+"     c     | {n/a - Command mode} | : or / or ? ('Command' mode; can be a bit delayed appearing)
 "    cv     | {n/a - Vim Ex mode}  | gQ to enter Vim Ex mode from Normal mode (or niI, niR, niV)
 "    ce     | {n/a - Ex mode}      | Q to enter Ex mode (if not remapped to gq as is commonly done)
 "     r     | {n/a - in a f/r}     | :%s/find/replace/gc - e.g., after enter is pressed, 'replace with'
-"    rm     | {n/a - in a f/r}     | 
+"    rm     | {n/a - in a f/r}     |
 "    r?     | [Y]es, [N]o, [C]a... | :confirm q (etc.)
-"     t     | {n/a - Command mode} | :ter[minal] to open a new terminal (and <C-w><C-c> to exit it)   
+"     t     | {n/a - Command mode} | :ter[minal] to open a new terminal (and <C-w><C-c> to exit it)
 " -----------------------------------------------------------------------------------------------------
 "
 " =====================================================================
