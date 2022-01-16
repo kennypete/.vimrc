@@ -185,7 +185,7 @@ set cmdheight=2
 " https://vim.fandom.com/wiki/Display_line_numbers#Mapping_to_toggle_line_numbers
 set number
 set numberwidth=3
-highlight LineNr term=bold cterm=NONE ctermfg=DarkGrey ctermbg=NONE gui=NONE guifg=DarkGrey guibg=NONE
+highlight LineNr term=bold cterm=NONE ctermfg=DarkGrey ctermbg=NONE gui=NONE guifg=Grey guibg=NONE
 
 " Function and <leader>l mapping for relative line number toggling (note
 " <leader> default is the \ key
@@ -218,23 +218,19 @@ set smarttab
 set showmode
 
 " Map, without recursion, during Visual, Select and Insert modes
-" <leader><leader> to escape to Normal. This helps provide
-" another option on the right side of the keyboard
-" key for Escape as well as ensuring, using a <right> to
-" return to the same cursor position (i.e., like a, not i).
+" ;; to escape to Normal. This helps provide
+" another option on the right side of the keyboard.
 " The remapping of the 'arrow' keys is another common
-" method, e.g., vnoremap jk <Esc><Esc>
-" but the delay (which can be avoided, that said) and
-" utility for a non-touch typist is not worth it IMHO.
-" (NB: Remapping Esc itself has unwanted side effects: don't)
-" Mapping to a control escaped chr is entered with control-v in Insert mode
-inoremap <leader><leader> <C-\><C-n><right>
-vnoremap <leader><leader> <C-\><C-n><right>
-inoremap jk <C-\><C-n><right>
-vnoremap jk <C-\><C-n><right>
+" method, e.g., inoremap jk <Esc>
+" but the delay is just annoying IMHO.
+" Mapping C-\ C-n is equivalent to escape.
+" (NB: Remapping Esc itself has unwanted side effects: don't!)
+inoremap ;; <C-\><C-n>
+vnoremap ;; <C-\><C-n>
 
 " Common remapping of ; to : when in Normal mode to save having to Shift
 nnoremap ; :
+" Mapping to a control escaped chr is entered with control-v in Insert mode
 
 " Make the arrow keys work exclusively (down a wrapped text line) rather than
 " linewise
@@ -273,14 +269,46 @@ map <leader>v :call CycleVirtualEdit()<CR>
 " When joining lines, only one space - NB: there is no true nospace option
 set nojoinspaces
 
-" Highlight line when in Insert mode as a key way to show you are in the mode
-set cursorlineopt=line
-autocmd InsertEnter,InsertLeave * set cursorline!
+" --- highlight special characters and the cursor ---
 
 " Highlight special characters, including nbsp and trailing spaces
-"  < non-breaking space | trailing space > 
-set list listchars=nbsp:°,trail:·
+"  < non-breaking space  |  tab 	  |  trailing space > 
+set list
+set listchars=nbsp:°,trail:·,tab:→—,eol:¶
 highlight SpecialKey ctermbg=Yellow guibg=Yellow
+highlight NonText ctermfg=238 guifg=#d0d0d0
+
+" Highlight line when in Insert mode as a key way to show you are in the mode
+set cursorlineopt=line
+
+function! CustomCursorIBEAM() abort
+  " Set the cursor to reflect the mode in XFCE
+  " https://vim.fandom.com/wiki/Change_cursor_shape_in_different_modes
+  if !filewritable('~/.config/xfce4/terminal/terminalrc')
+    silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_BLOCK/TERMINAL_CURSOR_SHAPE_IBEAM/' ~/.config/xfce4/terminal/terminalrc"
+  endif
+  set cursorline
+endfunction
+
+function! CustomCursorBLOCK() abort
+  " Set the cursor to reflect the mode in XFCE
+  if !filewritable('~/.config/xfce4/terminal/terminalrc')
+    silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_IBEAM/TERMINAL_CURSOR_SHAPE_BLOCK/' ~/.config/xfce4/terminal/terminalrc"
+  endif
+  set nocursorline
+endfunction
+
+autocmd InsertEnter * call CustomCursorIBEAM()
+
+autocmd InsertLeave * call CustomCursorBLOCK()
+
+autocmd VimEnter * if !filewritable('~/.config/xfce4/terminal/terminalrc')
+    \ | silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_IBEAM/TERMINAL_CURSOR_SHAPE_BLOCK/' ~/.config/xfce4/terminal/terminalrc"
+    \ | endif
+
+autocmd VimLeave * if !filewritable('~/.config/xfce4/terminal/terminalrc')
+    \ | silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_BLOCK/TERMINAL_CURSOR_SHAPE_IBEAM/' ~/.config/xfce4/terminal/terminalrc"
+    \ | endif
 
 " =====================================================================
 " ================================ 03 =================================
