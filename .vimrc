@@ -162,6 +162,8 @@ endif
 " =====================================================================
 "
 " >>> Miscellaneous customisations <<<
+
+let mapleader = "\<Tab>"
 "
 " Selected .vimrc from https://vim.fandom.com/wiki/Example_vimrc
 "
@@ -310,6 +312,10 @@ autocmd VimLeave * if !filewritable('~/.config/xfce4/terminal/terminalrc')
     \ | silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_BLOCK/TERMINAL_CURSOR_SHAPE_IBEAM/' ~/.config/xfce4/terminal/terminalrc"
     \ | endif
 
+set colorcolumn=80
+" This can be used to colour the area from column 81 onwards
+" let &colorcolumn=join(range(81,999),",")
+
 " =====================================================================
 " ================================ 03 =================================
 " =====================================================================
@@ -406,6 +412,8 @@ Plug 'https://github.com/kennypete/vim-airline-themes.git'
 " Plug 'https://github.com/itchyny/lightline.vim'
 " Consider migrating to lightline, however, check it handles as well/extend it
 Plug 'https://github.com/python-mode/python-mode.git', { 'for': 'python' }
+Plug 'https://github.com/habamax/vim-asciidoctor.git'
+Plug 'https://github.com/kennypete/vim-sents.git'
 
 call plug#end()
 
@@ -441,8 +449,32 @@ else
         \ '' : '^V',
         \ }
 endif
-let g:airline_left_sep='◤'
 
+let g:airline_left_sep='◤'             " \u25e5
+let g:airline_right_sep='◢'            " \u25e2
+
+let g:airline_symbols = {}
+let g:airline_symbols.colnr = ' '     " \u2009\ue0a3
+let g:airline_symbols.crypt = 'Ȼ'      " \u023b
+let g:airline_symbols.linenr = ' ¶'    " \u2009\u00b6
+let g:airline_symbols.maxlinenr = 'Ω'  " \u03a9
+let g:airline_symbols.branch = ''     " \ue0a0
+let g:airline_symbols.paste = 'ρ'      " \u03c1
+let g:airline_symbols.spell = '✓'      " \u2713
+let g:airline_symbols.notexists = '∄'  " \u2204
+let g:airline_symbols.whitespace = 'Ξ' " \u039e
+let g:airline_symbols.space = ' '
+let g:airline_symbols.readonly = '⊝'   " \u229d
+let g:airline_symbols.dirty='☣'        " \u2623
+let g:airline_symbols.modified='Δ'     " \u0394
+let g:airline_symbols.keymap='Keymap:'
+let g:airline_symbols.ellipsis='⋯'     " \u22ef
+
+" Enable the tabline list of buffers
+let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#tabline#left_sep = '◘'
+" Show just the filename
+let g:airline#extensions#tabline#fnamemod = ':t'
 "
 " Mode information
 "
