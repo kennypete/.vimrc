@@ -1,20 +1,54 @@
 = .vimrc
 
-This is my .vimrc, kept updated. Vim will read a .vimrc symbolic link, so
+== linux
+
+My .vimrc, kept updated.  Vim will read a .vimrc symbolic link, so
 the easiest means to ensure a clean local repository is to have a "~/vimrc"
-folder (i.e., in the same location as the .vimrc used by Vim).
+folder (i.e., in the same location as the .vimrc used by Vim).  That also
+allows for a clean cloned git repository and for easy updating back to github.
+
+== windows
+
+My _vimrc, kept updated.  Techincally it would be possible to run a single
+file for my .vimrc and just clone it for Windows.  However, for now it is
+kept separate.  For the purposes of this repository, only .vimrc is the name
+used but the same content applies, except where indicated.
 
 == sections
 
 I have split my .vimrc into sections:
 
 [horizontal]
-01:: The default .vimrc file from B. Moolenaar, copied verbatim + modified
-where commented
-02:: Various additions from different sources (as noted)
+01:: The default .vimrc file from B. Moolenaar, copied verbatim but then
+modified
++
+- Q is not mapped to gq
++
+02:: Various additions from different sources (as noted).
++
+- mapleader to <Tab>
+- many things (_itemise later_)
++
 03:: Functions
++
+- Code commenting: <leader><space> will comment various file types over the
+current or visually selected line(s). including uncommenting where already
+commented
+- Generate Unicode table with `:GenerateUnicode(first, last)`
++
 04:: vimplug
-05 to 10:: [Future - perhaps splitting out 03]
++
+- vim-airline and vim-airline-themes
+- python-mode
+- vim-asciidoctor
+- vim-sents (my own authored plugin for substituting entities to/from UTF-8)
++
+05:: Window-specific things (only in _vimrc)
++
+- a specific WSL change to prevent startup in Replace mode (`set t_u7=`)
+- many things specific to windows gvim in a `if has('win32')` command block
++
+06 to 10:: [_Future - perhaps splitting out 03_]
 11:: Airline (i.e., airline plugin) settings/overrides
 12:: The python-mode (i.e., pymode plugin) additions
 
