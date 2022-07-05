@@ -48,9 +48,25 @@ commented
 - a specific WSL change to prevent startup in Replace mode (`set t_u7=`)
 - many things specific to windows gvim in a `if has('win32')` command block
 +
-06 to 10:: [_Future - perhaps splitting out 03_]
+06 to 10:: [_Reserved for future use._ +
+_(perhaps split out 03 too)_]
 11:: Airline (i.e., airline plugin) settings/overrides
++
+- Theme set to my own ansi_focus theme, run from a fork of vim-airline-themes
+that uses a very simple and clean theme with ANSI colours
+- Mode map settings to be different to the default, which I left alone when
+my pull request to fix modes was accepted
+- Specification of separator characters and many other symbols characters
+- Turning on the tabline, which displays the buffers that are available, their
+status (changed, etc.) as well as their display (file name only) and separator
++
 12:: The python-mode (i.e., pymode plugin) additions
++
+- Various common settings for python-mode including trimming white-spaces
+- Code checking settings, all linting related
+- Rope support, i.e., code completion options
+- Syntatical settings, which essentially adds formatting for constructs
++
 
 == other Vim notes / random stuff
 
