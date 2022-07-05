@@ -67,6 +67,7 @@ status (changed, etc.) as well as their display (file name only) and separator
 - Rope support, i.e., code completion options
 - Syntatical settings, which essentially adds formatting for constructs
 +
+88:: Development area (if used)
 
 == other Vim notes / random stuff
 
