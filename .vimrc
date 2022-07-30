@@ -294,21 +294,25 @@ endfunction
 
 function! CustomCursorBLOCK() abort
   " Set the cursor to reflect the mode in XFCE
-  if !filewritable('~/.config/xfce4/terminal/terminalrc')
+  if if (isdirectory('~/.config/xfce4') && !filewritable('~/.config/xfce4/terminal/terminalrc'))
     silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_IBEAM/TERMINAL_CURSOR_SHAPE_BLOCK/' ~/.config/xfce4/terminal/terminalrc"
   endif
   set nocursorline
 endfunction
 
-autocmd InsertEnter * call CustomCursorIBEAM()
+if isdirectory('~/.config/xfce4')
+  autocmd InsertEnter * call CustomCursorIBEAM()
+endif
 
-autocmd InsertLeave * call CustomCursorBLOCK()
+if isdirectory('~/.config/xfce4')
+  autocmd InsertLeave * call CustomCursorBLOCK()
+endif
 
-autocmd VimEnter * if !filewritable('~/.config/xfce4/terminal/terminalrc')
+autocmd VimEnter * if (isdirectory('~/.config/xfce4') && !filewritable('~/.config/xfce4/terminal/terminalrc'))
     \ | silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_IBEAM/TERMINAL_CURSOR_SHAPE_BLOCK/' ~/.config/xfce4/terminal/terminalrc"
     \ | endif
 
-autocmd VimLeave * if !filewritable('~/.config/xfce4/terminal/terminalrc')
+autocmd VimLeave * if (isdirectory('~/.config/xfce4') && !filewritable('~/.config/xfce4/terminal/terminalrc'))
     \ | silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_BLOCK/TERMINAL_CURSOR_SHAPE_IBEAM/' ~/.config/xfce4/terminal/terminalrc"
     \ | endif
 
