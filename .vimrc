@@ -1,27 +1,22 @@
 " MY .vimrc SECTIONS
 " ==================
-" 01. The default vimrc file, copied verbatim + modified where commented
-" 02. Various additions from different sources (as noted)
-" 03. Functions
-" 04. vimplug
+" 01 The default vimrc file, copied verbatim + modified where commented
+" 02 Windows and WSL handling
+" 03 Various additions from different sources (as noted)
+" 04 Functions
+" 05 Plugins information
 " ...
-" 11. Airline (i.e., airline plugin) settings/overrides
-" 12. The python-mode (i.e., pymode plugin) additions
-
+" 11 Airline plugin settings/overrides
+" ...
+" 77 Deleted content (notes)
+" 88 Testing area
 
 " =====================================================================
-" ================================ 01 =================================
+" 01 The default vimrc file, copied verbatim + modified where commented
 " =====================================================================
-"
-" >>> The default vimrc file (modified) <<
-"
-" Maintainer: Bram Moolenaar <Bram@vim.org>
-" Last change: 2020 Sep 30
-"
-" This is loaded if no vimrc file was found.
-" Except when Vim is run with "-u NONE" or "-C".
-" Individual settings can be reverted with ":set option&".
-" Other commands can be reverted as mentioned below.
+" Based on Bram Moolenaar's defaults (2020 Sep 30), which is loaded when no
+" vimrc file is found. Vim can be run with "-u NONE" or "-C" to not load a
+" vimrc. Individual settings can be reverted with ":set option&".
 
 " When started as "evim", evim.vim will already have done these settings.
 if v:progname =~? "evim"
@@ -79,14 +74,14 @@ if has('win32')
   set guioptions-=t
 endif
 
-" Do use Ex mode - commented out default .vimrc setting
-" XX Don't use Ex mode, use Q for formatting.
-" XX Revert with ":unmap Q".
-" XX map Q gq
+" Do use Ex mode ,, deleted: map Q gq default setting, i.e., do NOT use Q for
+" formatting, use the default Ex mode
 
 " CTRL-U in insert mode deletes a lot.  Use CTRL-G u to first break undo,
 " so that you can undo CTRL-U after inserting a line break.
 " Revert with ":iunmap <C-U>".
+" PK: note that the undo atom is determined by rules, e.g., a return creates
+" an undo point
 inoremap <C-U> <C-G>u<C-U>
 
 " In many terminal emulators the mouse works just fine.  By enabling it you
@@ -103,19 +98,16 @@ endif
 
 " Only do this part when Vim was compiled with the +eval feature.
 if 1
-
   " Enable file type detection.
   " Use the default filetype settings, so that mail gets 'tw' set to 72,
   " 'cindent' is on in C files, etc.
   " Also load indent files, to automatically do language-dependent indenting.
   " Revert with ":filetype off".
   filetype plugin indent on
-
   " Put these in an autocmd group, so that you can revert them with:
   " ":augroup vimStartup | au! | augroup END"
   augroup vimStartup
     au!
-
     " When editing a file, always jump to the last known cursor position.
     " Don't do it when the position is invalid, when inside an event handler
     " (happens when dropping a file on gvim) and for a commit message (it's
@@ -124,20 +116,15 @@ if 1
       \ if line("'\"") >= 1 && line("'\"") <= line("$") && &ft !~# 'commit'
       \ |   exe "normal! g`\""
       \ | endif
-
   augroup END
-
 endif
 
 " Switch syntax highlighting on when the terminal has colors or when using the
-" GUI (which always has colors).
+" GUI (which always has colors). ,, PK since I do not use C the C comments
+" highlighting option is deleted (let c_comment_strings=1)
 if &t_Co > 2 || has("gui_running")
   " Revert with ":syntax off".
   syntax on
-
-  " I like highlighting strings inside C comments.
-  " Revert with ":unlet c_comment_strings".
-  let c_comment_strings=1
 endif
 
 " Convenient command to see the difference between the current buffer and the
@@ -147,6 +134,7 @@ endif
 if !exists(":DiffOrig")
   command DiffOrig vert new | set bt=nofile | r ++edit # | 0d_ | diffthis
     \ | wincmd p | diffthis
+  command DO DiffOrig " ,,PK added a synonym since this is so great
 endif
 
 if has('langmap') && exists('+langremap')
@@ -156,15 +144,64 @@ if has('langmap') && exists('+langremap')
   set nolangremap
 endif
 
+" =====================================================================
+" 02 Windows and WSL handling
+" =====================================================================
+" Windows Gvim stores the '.vimrc' as '_vimrc' in the home directory.
+" The following are changes made so that the experience using Windows Gvim
+" and WSL, are optimal.
+
+" Prevent startup in Replace mode when using WSL (has no impact on
+" native Linux) as well as Windows.
+" https://superuser.com/questions/1284561/why-is-vim-starting-in-replace-mode
+set t_u7=
+
+" These should be immume to Linux, so can be retained.
+if has('win32')
+  " Force utf-8 as otherwise the display will be square boxes / upside down ?s
+  " https://vim.fandom.com/wiki/Working_with_Unicode
+  set encoding=utf-8
+  " Set gvim-specific font to ensure display of special characters
+  " https://dejavu-fonts.github.io/ (DejaVu Sans Mono for Powerline)
+  " This handles Windows Gvim, which does not have sticky fonts,
+  " however, for WSL the font can be set in the
+  " WSL Properties dialog, but the font should also be installed, i.e.,
+  " https://packages.debian.org/bullseye/fonts-dejavu
+  if has("gui_running")
+    if has("gui_win32")
+      set guifont=DejaVu\ Sans\ Mono\ for\ Powerline:h12 " https://github.com/powerline/fonts/tree/master/DejaVuSansMono
+      set guifontwide=DejaVu\ Sans\ Mono\ for\ Powerline:h12 " For windows to display mixed character sets
+      " Note: http://dejavu.sourceforge.net/samples/DejaVuSansMono.pdf provides the addressed characters as at 2016 but this is a 2018 font so it may cover more
+    endif
+  endif
+else " WSL test for airline Powerline
+  " But set no Powerline fonts when in WSL as they are a pain to get right
+  if strlen(system('uname -a | grep Microsoft')) > 0
+    set encoding=utf-8
+    let g:airline_powerline_fonts = -1 " I believe init.vim has this wrongly set up so this should work
+    let g:airline_symbols_ascii = 1 " Set the symbols to ascii but override some later
+  endif
+endif
 
 " =====================================================================
-" ================================ 02 =================================
+" 03 Various additions from different sources (as noted)
 " =====================================================================
-"
-" >>> Miscellaneous customisations <<<
 
-let mapleader = "\<Tab>"
-"
+" Remap space to leader in Normal mode
+nnoremap <SPACE> <Nop>
+let mapleader = " "
+
+" Define Next/Prior buffer function and use Tab and Shift-Tab to navigate them
+" in Normal mode
+function! NextBuffer() abort
+  silent! execute "bn!"
+endfunction
+function! PriorBuffer() abort
+  silent! execute "bp!"
+endfunction
+nnoremap <TAB> :call NextBuffer()<CR>
+nnoremap <S-TAB> :call PriorBuffer()<CR>
+
 " Selected .vimrc from https://vim.fandom.com/wiki/Example_vimrc
 "
 " Highlight searches (use <C-L> to temporarily turn off highlighting; see the
@@ -179,7 +216,7 @@ nnoremap <C-L> :nohl<CR><C-L>
 set laststatus=2
 
 " Set the command window height to 2 lines, to avoid many cases of having to
-" "press <Enter> to continue"
+" press <Enter> to continue"
 set cmdheight=2
 
 " Display line numbers on the left and set line number width to 3
@@ -199,8 +236,11 @@ function! ToggleLineNumber() abort
 endfunction
 map <leader>l :call ToggleLineNumber()<CR>
 
-" Allow left and right arrow keys, as well as h and l, to wrap when used at beginning or end of lines. ( < > are the cursor keys used in normal and visual mode, and [ ] are the cursor keys in insert mode
-" From: https://vim.fandom.com/wiki/Automatically_wrap_left_and_right
+" Allow left and right arrow keys, as well as h and l, to wrap when used at
+" beginning or end of lines. Since I have the 40% keyboard which uses
+" Upper-h and Upper-L to mimic the Left and Right arrow keys, this ensures
+" that they behave the way I want them to.
+" gx https://vim.fandom.com/wiki/Automatically_wrap_left_and_right
 set whichwrap+=<,>,h,l,[,]
 
 " Indentation settings for using 4 spaces instead of tabs.
@@ -216,15 +256,14 @@ set expandtab
 set smarttab
 
 " Show the mode you are on the last line. A lot of folk turn this off
-" when using plugins like Airline, but I prefer it always on
+" when using plugins like Airline, but I prefer it always on.
 set showmode
 
 " Map, without recursion, during Visual, Select and Insert modes
 " ;; to escape to Normal. This helps provide
 " another option on the right side of the keyboard.
 " The remapping of the 'arrow' keys is another common
-" method, e.g., inoremap jk <Esc>
-" but the delay is just annoying IMHO.
+" method, e.g., inoremap jk <Esc> but the delay is just annoying IMHO.
 " Mapping C-\ C-n is equivalent to escape.
 " (NB: Remapping Esc itself has unwanted side effects: don't!)
 inoremap ;; <C-\><C-n>
@@ -232,16 +271,25 @@ vnoremap ;; <C-\><C-n>
 
 " Common remapping of ; to : when in Normal mode to save having to Shift
 nnoremap ; :
-" Mapping to a control escaped chr is entered with control-v in Insert mode
 
-" Make the arrow keys work exclusively (down a wrapped text line) rather than
-" linewise
+" Make the arrow keys work exclusively (down a wrapped text line) rather
+" than linewise which is a real pain. (:norm j etc. can be used if wanted)
+" Note that with the 40% keyboard this is gold because the Down, Up are
+" actually Upper-j and Upper-k.  The inoremaps are needed because gj and gk
+" are literals in Insert mode, so <C-o> for one command is needed to make it work the same in Insert mode.
 nnoremap <Down> gj
 nnoremap <Up> gk
+inoremap <Down> <C-o>gj
+inoremap <Up> <C-o>gk
 
-" Use the Control-S to act like any other text editor (Windows) where it saves
-" the file.
+" Use Control-S in Normal mode to act like any other text editor (Windows)
+" where it saves the file.
 nnoremap <C-s> :w<CR>
+
+" Use Control-K in Normal mode to display digraphs since Control-K in Insert
+" mode actually inserts the digraphs.  Note that in Normal mode Control-K is
+" actually unmapped, so this is not a change, and is just logical.
+nnoremap <C-k> :digraphs<CR>
 
 " Function and <leader>v mapping for virtual editing (refer :help
 " virtualedit), which can be used especially for editing tables such as
@@ -277,7 +325,7 @@ set nojoinspaces
 "  < non-breaking space  |  tab 	  |  trailing space > 
 set list
 set listchars=nbsp:°,trail:·,tab:→—,eol:¶
-highlight SpecialKey ctermbg=Yellow guibg=Yellow
+highlight SpecialKey ctermbg=Yellow guibg=DarkYellow guifg=Black
 highlight NonText ctermfg=238 guifg=#d0d0d0
 
 " Highlight line when in Insert mode as a key way to show you are in the mode
@@ -286,46 +334,40 @@ set cursorlineopt=line
 function! CustomCursorIBEAM() abort
   " Set the cursor to reflect the mode in XFCE
   " https://vim.fandom.com/wiki/Change_cursor_shape_in_different_modes
-  if !filewritable('~/.config/xfce4/terminal/terminalrc')
-    silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_BLOCK/TERMINAL_CURSOR_SHAPE_IBEAM/' ~/.config/xfce4/terminal/terminalrc"
+  if isdirectory('~/.config/xfce4')
+    if filewritable('~/.config/xfce4/terminal/terminalrc')
+      silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_BLOCK/TERMINAL_CURSOR_SHAPE_IBEAM/' ~/.config/xfce4/terminal/terminalrc"
+    endif
   endif
   set cursorline
 endfunction
 
 function! CustomCursorBLOCK() abort
   " Set the cursor to reflect the mode in XFCE
-  if if (isdirectory('~/.config/xfce4') && !filewritable('~/.config/xfce4/terminal/terminalrc'))
-    silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_IBEAM/TERMINAL_CURSOR_SHAPE_BLOCK/' ~/.config/xfce4/terminal/terminalrc"
+  if isdirectory('~/.config/xfce4')
+    if filewritable('~/.config/xfce4/terminal/terminalrc')
+        silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_IBEAM/TERMINAL_CURSOR_SHAPE_BLOCK/' ~/.config/xfce4/terminal/terminalrc"
+    endif
   endif
   set nocursorline
 endfunction
 
-if isdirectory('~/.config/xfce4')
-  autocmd InsertEnter * call CustomCursorIBEAM()
-endif
+autocmd InsertEnter * call CustomCursorIBEAM()
 
-if isdirectory('~/.config/xfce4')
-  autocmd InsertLeave * call CustomCursorBLOCK()
-endif
+autocmd InsertLeave * call CustomCursorBLOCK()
 
-autocmd VimEnter * if (isdirectory('~/.config/xfce4') && !filewritable('~/.config/xfce4/terminal/terminalrc'))
-    \ | silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_IBEAM/TERMINAL_CURSOR_SHAPE_BLOCK/' ~/.config/xfce4/terminal/terminalrc"
-    \ | endif
+autocmd VimEnter * call CustomCursorBLOCK()
 
-autocmd VimLeave * if (isdirectory('~/.config/xfce4') && !filewritable('~/.config/xfce4/terminal/terminalrc'))
-    \ | silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_BLOCK/TERMINAL_CURSOR_SHAPE_IBEAM/' ~/.config/xfce4/terminal/terminalrc"
-    \ | endif
+autocmd VimLeave * call CustomCursorIBEAM()
 
+" Put a highlight at column 80
 set colorcolumn=80
-" This can be used to colour the area from column 81 onwards
-" let &colorcolumn=join(range(81,999),",")
 
 " =====================================================================
-" ================================ 03 =================================
+" 04 Functions
 " =====================================================================
 "
-" >>> Functions <<<
-" NB: the recommendation to add 'abort' after each so that
+" NB : the recommendation to add 'abort' after each so that
 " if something goes wrong Vim will not try to run the whole function, as
 " recommended by the Reddit vimrctips.
 "
@@ -334,9 +376,9 @@ function! GenerateUnicode(first, last) abort
   let i = a:first
   while i <= a:last
     if (i%256 == 0)
-      $put ='----------------------------------------------------'
-      $put ='     0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F '
-      $put ='----------------------------------------------------'
+      $put ='------------------------------------'
+      $put ='     0 1 2 3 4 5 6 7 8 9 A B C D E F'
+      $put ='------------------------------------'
     endif
     let c = printf('%04X ', i)
     for j in range(16)
@@ -397,37 +439,34 @@ function! ToggleComment() abort
         echo "No comment leader found for filetype"
     end
 endfunction
-
-nnoremap <leader><Space> :call ToggleComment()<cr>
-vnoremap <leader><Space> :call ToggleComment()<cr>
+nnoremap <leader>c :call ToggleComment()<cr>
+vnoremap <leader>c :call ToggleComment()<cr>
 
 " --------------------------------------------------------------------
 
 
+" =====================================================================
+" 05 Plugins information
+" =====================================================================
+" I am now using the inbuilt Vim plugin handling.
+" * Plugins path: ~/.vim/pack/plugins/start/ or ~\vimfiles\pack\plugins\start
+" * To determine the remote git repository: git remote show origin
+" * Deleted plugin: Pymode.  I was not using this enough.  If the old setup is
+"   wanted for whatever reason, the setup as at 6/7/2022 is at:
+"   https://github.com/kennypete/.vimrc/blob/86db077d1039a4cd43b5d67f050bca1f4f2e8a91/_vimrc
+" Plugins in use (20221024):
+" https://github.com/kennypete/vim-airline.git
+" https://github.com/kennypete/vim-airline-themes.git
+" https://github.com/habamax/vim-asciidoctor.git
+" https://github.com/kennypete/vim-sents.git
+" https://github.com/kennypete/vim-characterize.git
+
 
 " =====================================================================
-" ================================ 04 =================================
-" =====================================================================
-"
-call plug#begin()
-
-Plug 'https://github.com/kennypete/vim-airline.git'
-Plug 'https://github.com/kennypete/vim-airline-themes.git'
-" Plug 'https://github.com/itchyny/lightline.vim'
-" Consider migrating to lightline, however, check it handles as well/extend it
-Plug 'https://github.com/python-mode/python-mode.git', { 'for': 'python' }
-Plug 'https://github.com/habamax/vim-asciidoctor.git'
-Plug 'https://github.com/kennypete/vim-sents.git'
-
-call plug#end()
-
-
-" =====================================================================
-" ================================ 11 =================================
+" 11 Airline plugin settings/overrides
 " =====================================================================
 "
 " PLUGIN >>> airline <<<
-"
 let g:airline_theme='ansi_focus'
 let g:airline_section_warning = ""
 let g:airline_mode_map_codes = 0
@@ -453,10 +492,21 @@ else
         \ '' : '^V',
         \ }
 endif
-
-let g:airline_left_sep='◤'             " \u25e5
-let g:airline_right_sep='◢'            " \u25e2
-
+let g:airline_section_c_only_filename = 1
+" Requires a font that will display Unicode when in WSL - DejaVu Sans Mono for
+" Powerline is the most touted
+" https://github.com/powerline/fonts/tree/master/DejaVuSansMono NOT
+" https://packages.debian.org/bullseye/fonts-dejavu NOR other Debian ones
+" The first if line here may not be needed?
+if strlen(system('uname -a | grep Microsoft')) == 0
+  let g:airline_powerline_fonts=1
+endif
+" Don't set the g:airline_left_sep and g:airline_right_sep as they, with
+" g:airline_powerline_fonts enabled, seem to managed to produce a full left
+" and right triangle for the status line.  I was using g:airline_left_sep='◤'
+" \u25e5 and g:airline_right_sep='◢' \u25e2
+" Overwrite the symbols with what I want, being characters that display okay
+" when using DejaVu Sans Mono for Powerline font.
 let g:airline_symbols = {}
 let g:airline_symbols.colnr = ' '     " \u2009\ue0a3
 let g:airline_symbols.crypt = 'Ȼ'      " \u023b
@@ -473,181 +523,27 @@ let g:airline_symbols.dirty='☣'        " \u2623
 let g:airline_symbols.modified='Δ'     " \u0394
 let g:airline_symbols.keymap='Keymap:'
 let g:airline_symbols.ellipsis='⋯'     " \u22ef
-
-" Enable the tabline list of buffers
+" Enable the list of buffers, not tabs
 let g:airline#extensions#tabline#enabled = 1
-let g:airline#extensions#tabline#left_sep = '◘'
+let g:airline#extensions#tabline#show_tabs = 0
+let g:airline#extensions#tabline#show_buffers = 1
 " Show just the filename
-let g:airline#extensions#tabline#fnamemod = ':t'
-"
-" Mode information
-"
-" -----------------------------------------------------------------------------------------------------
-" Mode code | Mode displayed       | How to get there and other info
-" -----------------------------------------------------------------------------------------------------
-"     n     | {blank}              | <Esc> from other modes; operator pendings too (no, nov, noV, no^V))
-"    no     | {blank}              | Operator-pending mode
-"    nov    | {blank}              | Operator-pending (forced characterwise |o_v|)
-"    noV    | {blank}              | Operator-pending (forced linewise |o_V|)
-" no no^V | {blank}              | Operator-pending (forced blockwise |o_|)
-"    niI    | (insert)             | <C-o> from Insert mode
-"    niR    | (replace)            | <C-o> from Replace mode
-"    niV    | (vreplace)           | <C-o> from Virtual Replace mode
-"     v     | VISUAL               | v from Normal mode (or <C-g> to toggle from Select mode)
-"     v     | (insert) VISUAL ...  | CTRL-O, v/V/<C-v>, or mouse select and drag from Insert mode
-"     V     | VISUAL LINE          | V from Normal mode (or <C-g> to toggle from Select Line mode)
-"    ^V   | VISUAL BLOCK         | <C-v> from Normal mode (or <C-g> to toggle from Select Block mode)
-"     s     | SELECT               | gh from Normal mode  (or <C-g> to toggle from Visual mode)
-"     S     | SELECT LINE          | gH from Normal mode (or <C-g> to toggle from Select Line mode)
-"    ^S   | SELECT BLOCK         | g<C-h> from Normal mode (or <C-g> to toggle from Visual Block mode)
-"     i     | INSERT               | i from Normal mode (or any of I a A o O c C s or S)
-"    ic     | Keyword completi...  | <C-n> or <C-p> from Insert mode (:help compl-generic)
-"    ix     | ^X mode (^]^D ...)   | <C-x> from Insert mode; this is 'Insert completion mode'
-"     R     | REPLACE              | R from Normal mode
-"    Rc     | Keyword completi...  | <C-n> or <C-p> from Replace mode (:help compl-generic)
-"    Rv     | VREPLACE             | gR from Normal mode ['useful for editing <Tab> separated columns']
-"    Rx     | ^X mode (^]^D ...)   | <C-x> from Replace mode; this is 'Replace completion mode'
-"     c     | {n/a - Command mode} | : or / or ? ('Command' mode; can be a bit delayed appearing)
-"    cv     | {n/a - Vim Ex mode}  | gQ to enter Vim Ex mode from Normal mode (or niI, niR, niV)
-"    ce     | {n/a - Ex mode}      | Q to enter Ex mode (if not remapped to gq as is commonly done)
-"     r     | {n/a - in a f/r}     | :%s/find/replace/gc - e.g., after enter is pressed, 'replace with'
-"    rm     | {n/a - in a f/r}     |
-"    r?     | [Y]es, [N]o, [C]a... | :confirm q (etc.)
-"     t     | {n/a - Command mode} | :ter[minal] to open a new terminal (and <C-w><C-c> to exit it)
-" -----------------------------------------------------------------------------------------------------
+let g:airline#extensions#tabline#formatter = 'unique_tail'
+
+" =====================================================================
+" 77 Deleted content (notes)
+" =====================================================================
+" VIM MODES ***********************************************************
+" Mode information: the table that was included as a comment has been removed.
+" Just gx this https://github.com/kennypete/asciidoc/blob/main/vim.asciidoc
+" Also gx https://rawgit.com/darcyparker/1886716/raw/vimModeStateDiagram.svg
+" PYMODE **************************************************************
+" Deleted plugin: Pymode.  I was not using this enough.  If the old setup is
+" wanted for whatever reason, the setup as at 6/7/2022 is at:
+" https://github.com/kennypete/.vimrc/blob/86db077d1039a4cd43b5d67f050bca1f4f2e8a91/_vimrc
 "
 " =====================================================================
-" ================================ 12 =================================
+" ================================ 88 =================================
 " =====================================================================
-"
-" >> PYMODE <<
-"
-" 2. Common functionality ~ https://github.com/python-mode/python-mode/blob/develop/doc/pymode.txt#L77
-" Turn on the whole plugin. *'g:pymode'*
-let g:pymode = 1
 
-" Trim unused white spaces on save. *'g:pymode_trim_whitespaces'*
-let g:pymode_trim_whitespaces = 1
-
-" Setup default python options. *'g:pymode_options'*
-let g:pymode_options = 1
-
-" Enable colorcolumn display at max_line_length. *'g:pymode_options_colorcolumn'*
-let g:pymode_options_colorcolumn = 1
-
-" Setup pymode |quickfix| window. *'g:pymode_quickfix_maxheight'*  *'g:pymode_quickfix_minheight'*
-let g:pymode_quickfix_minheight = 2
-let g:pymode_quickfix_maxheight = 5
-
-" Set pymode |preview| window height. *'g:pymode_preview_height'*
-" Preview window is used to show documentation and ouput from |pymode-run|.
-let g:pymode_preview_height = 4
-
-" Set where pymode |preview| window will appear. *'g:pymode_preview_position'*
-let g:pymode_preview_position = 'botright'
-
-" Pymode supports PEP8-compatible python indent.
-" Enable pymode indentation *'g:pymode_indent'*
-let g:pymode_indent = 1
-
-" Turn on the run code script *'g:pymode_run'*
-" let g:pymode_run = 1
-
-" Binds keys to run python code *'g:pymode_run_bind'*
-" let g:pymode_run_bind = '<leader>r'
-
-" 3. Code checking ~ https://github.com/python-mode/python-mode/blob/develop/doc/pymode.txt#L292
-" Turn on code checking *'g:pymode_lint'*
-let g:pymode_lint = 1
-
-" Check code on every save (if file has been modified) *'g:pymode_lint_on_write'*
-let g:pymode_lint_on_write = 1
-
-" Check code when editing (on the fly) *'g:pymode_lint_on_fly'*
-let g:pymode_lint_on_fly = 0
-
-" Show error message if cursor placed at the error line *'g:pymode_lint_message'*
-let g:pymode_lint_message = 1
-
-" 4. Rope support ~ https://github.com/python-mode/python-mode/blob/develop/doc/pymode.txt#L407
-
-" Turn on the rope script *'g:pymode_rope'*
-let g:pymode_rope = 1
-
-" Set the prefix for rope commands *'g:pymode_rope_prefix'*
-let g:pymode_rope_refix = '<C-c>'
-
-" Show documentation for object under cursor. *'g:pymode_rope_show_doc_bind'*
-let g:pymode_rope_show_doc_bind = '<C-c>d'
-
-" If there's only one complete item, vim may be inserting it automatically
-" instead of using a popup menu. If the complete item which inserted is not
-" your wanted, you can roll it back use '<c-w>' in |Insert| mode or setup
-" 'completeopt' with `menuone` and `noinsert` in your vimrc. .e.g.
-set completeopt=menuone,noinsert
-
-" Turn on code completion support in the plugin *'g:pymode_rope_completion'*
-let g:pymode_rope_completion = 1
-
-" Turn on autocompletion when typing a period *'g:pymode_rope_complete_on_dot'*
-let g:pymode_rope_complete_on_dot = 1
-
-" Keymap for autocomplete *'g:pymode_rope_completion_bind'*
-" let g:pymode_rope_completion_bind = '<C-Space>'
-
-" Load modules to autoimport by default *'g:pymode_rope_autoimport_modules'*
-let g:pymode_rope_autoimport_modules = ['os', 'shutil', 'datetime']
-
-" 5. Syntax ~ https://github.com/python-mode/python-mode/blob/develop/doc/pymode.txt#L648
-
-" Turn on pymode syntax *'g:pymode_syntax'*
-let g:pymode_syntax = 1
-
-" Enable all python highlights *'g:pymode_syntax_all'*
-let g:pymode_syntax_all = 1
-
-" Highlight "print" as a function *'g:pymode_syntax_print_as_function'*
-let g:pymode_syntax_print_as_function = 0
-
-" Highlight "async/await" keywords *'g:pymode_syntax_highlight_async_await'*
-let g:pymode_syntax_highlight_async_await = g:pymode_syntax_all
-
-" Highlight '=' operator *'g:pymode_syntax_highlight_equal_operator'*
-let g:pymode_syntax_highlight_equal_operator = g:pymode_syntax_all
-
-" Highlight ':=' operator *'g:pymode_syntax_highlight_walrus_operator'*
-let g:pymode_syntax_highlight_walrus_operator = g:pymode_syntax_all
-
-" Highlight '*' operator *'g:pymode_syntax_highlight_stars_operator'*
-let g:pymode_syntax_highlight_stars_operator = g:pymode_syntax_all
-
-" Highlight 'self' keyword *'g:pymode_syntax_highlight_self'*
-let g:pymode_syntax_highlight_self = g:pymode_syntax_all
-
-" Highlight indents errors *'g:pymode_syntax_indent_errors'*
-let g:pymode_syntax_indent_errors = g:pymode_syntax_all
-
-" Highlight spaces errors *'g:pymode_syntax_space_errors'*
-let g:pymode_syntax_space_errors = g:pymode_syntax_all
-
-" Highlight string formatting *'g:pymode_syntax_string_formatting'*
-" *'g:pymode_syntax_string_format'*
-" *'g:pymode_syntax_string_templates'*
-" *'g:pymode_syntax_doctests'*
-let g:pymode_syntax_string_formatting = g:pymode_syntax_all
-let g:pymode_syntax_string_format = g:pymode_syntax_all
-let g:pymode_syntax_string_templates = g:pymode_syntax_all
-let g:pymode_syntax_doctests = g:pymode_syntax_all
-
-" Highlight builtin objects (True, False, ...) *'g:pymode_syntax_builtin_objs'*
-let g:pymode_syntax_builtin_objs = g:pymode_syntax_all
-
-" Highlight builtin types (str, list, ...) *'g:pymode_syntax_builtin_types'*
-let g:pymode_syntax_builtin_types = g:pymode_syntax_all
-
-" Highlight exceptions (TypeError, ValueError, ...) *'g:pymode_syntax_highlight_exceptions'*
-let g:pymode_syntax_highlight_exceptions = g:pymode_syntax_all
-
-" Highlight docstrings as pythonDocstring (otherwise as pythonString) *'g:pymode_syntax_docstrings'*
-let g:pymode_syntax_docstrings = g:pymode_syntax_all
 
