@@ -32,7 +32,6 @@ modified
 - Force utf-8
 - Set the font to DejaVu Sans Mono for Powerline
 +
-
 03:: Various additions from different sources (as noted)
 +
 - Mapleader to `<Space>`
@@ -90,6 +89,7 @@ status (changed, etc.) as well as their display (file name only)
 +
 - Currently empty
 +
+
 
 == other Vim notes / random stuff
 
