@@ -3,7 +3,7 @@
 " 01 The default vimrc file, copied verbatim + modified where commented
 " 02 Windows and WSL handling
 " 03 Various additions from different sources (as noted)
-" 04 Functions
+" 04 Functions and commands
 " 05 Plugins information
 " ...
 " 11 Airline plugin settings/overrides
@@ -259,6 +259,7 @@ set smarttab
 " when using plugins like Airline, but I prefer it always on.
 set showmode
 
+" *** Thinking this is not that great and keep to <ESC> or <CTRL>[
 " Map, without recursion, during Visual, Select and Insert modes
 " ;; to escape to Normal. This helps provide
 " another option on the right side of the keyboard.
@@ -266,11 +267,18 @@ set showmode
 " method, e.g., inoremap jk <Esc> but the delay is just annoying IMHO.
 " Mapping C-\ C-n is equivalent to escape.
 " (NB: Remapping Esc itself has unwanted side effects: don't!)
-inoremap ;; <C-\><C-n>
-vnoremap ;; <C-\><C-n>
+" inoremap ;; <C-\><C-n>
+" vnoremap ;; <C-\><C-n>
 
+" *** Thinking this is not that great and keep ; to do next after f/F/t/T
 " Common remapping of ; to : when in Normal mode to save having to Shift
-nnoremap ; :
+" nnoremap ; :
+" Map <CTRL>; so that <SHIFT>; and <CTRL>; (which is unmapped in Normal mode
+" both go to Command mode.  Plus, in Insert and Visual Mode make <CTRL>; go
+" to Command Mode too, skipping Normal Mode.
+nnoremap <C-;> :
+inoremap <C-;> <C-\><C-n>:
+vnoremap <C-;> <C-\><C-n>:
 
 " Make the arrow keys work exclusively (down a wrapped text line) rather
 " than linewise which is a real pain. (:norm j etc. can be used if wanted)
@@ -363,8 +371,11 @@ autocmd VimLeave * call CustomCursorIBEAM()
 " Put a highlight at column 80
 set colorcolumn=80
 
+" Enable unsaved buffers to remain open rather than forcing saves/erroring
+set hidden
+
 " =====================================================================
-" 04 Functions
+" 04 Functions and Commands
 " =====================================================================
 "
 " NB : the recommendation to add 'abort' after each so that
@@ -444,6 +455,12 @@ vnoremap <leader>c :call ToggleComment()<cr>
 
 " --------------------------------------------------------------------
 
+" User-command Rp (redir to register p)
+command! -nargs=+ -complete=command Rp redir @p | silent execute <q-args> | redir END
+" This means, for example, :Rp filter /S[duh]/ command
+" will put the output of that command to the p register. Then all you need
+" to do is "pp to put the contents of that register p to the buffer
+" in Normal mode
 
 " =====================================================================
 " 05 Plugins information
@@ -545,5 +562,4 @@ let g:airline#extensions#tabline#formatter = 'unique_tail'
 " =====================================================================
 " ================================ 88 =================================
 " =====================================================================
-
 

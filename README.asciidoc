@@ -45,7 +45,9 @@ modified
 - Indentation settings for shiftwidth, softtabstop, and expandtab (on)
 - Have smarttab (on)
 - Have showmode (on) because despite Airline being used for the status line
-- Mapping ;; to `<Esc>` (or more rightly `<C-\><C-n>`)
+- In Normal mode, map <CTRL>; to :
+- In Insert/Visual modes map <CTRL>; to <C-\><C-n>:
+- [Stopped doing this:] _Mapping ;; to `<Esc>` (or more rightly `<C-\><C-n>`)_
 - Making the arrow keys work exclusively through wrapped lines v. linewise
 - Save with `<C-s>` in Normal mode
 - Command :digraphs with `<C-k>` in Normal mode
