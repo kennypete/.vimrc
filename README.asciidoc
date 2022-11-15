@@ -37,7 +37,7 @@ modified
 - Mapleader to `<Space>`
 - Enabling Next/Prior buffer function, mapped to Tab/Shift-Tab in Normal mode
 - Highlighting search results
-- Mapping `<C-l>` to no highlight and redraw rather than just redraw
+- Mapping `<C-l>` to no highlight (:nohl) and redraw rather than just redraw
 - Force the status line to be 2 lines, which ensures the mode is displayed
 - Line numbers 3 numerals in length (min.)
 - Set `<leader>l` to toggle absolute and relative line numbering in Normal mode
@@ -47,7 +47,8 @@ modified
 - Have showmode (on) because despite Airline being used for the status line
 - In Normal mode, map <CTRL>; to :
 - In Insert/Visual modes map <CTRL>; to <C-\><C-n>:
-- [Stopped doing this:] _Mapping ;; to `<Esc>` (or more rightly `<C-\><C-n>`)_
+- Mapping `<C-c>` to `<Esc>:` (and equivalents, e.g., `<C-\><C-n>:`; all modes)
+- Turning the error bell off for several instances where it adds no value
 - Making the arrow keys work exclusively through wrapped lines v. linewise
 - Save with `<C-s>` in Normal mode
 - Command :digraphs with `<C-k>` in Normal mode

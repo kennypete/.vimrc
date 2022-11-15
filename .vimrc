@@ -269,22 +269,29 @@ set showmode
 " (NB: Remapping Esc itself has unwanted side effects: don't!)
 " inoremap ;; <C-\><C-n>
 " vnoremap ;; <C-\><C-n>
-
 " *** Thinking this is not that great and keep ; to do next after f/F/t/T
 " Common remapping of ; to : when in Normal mode to save having to Shift
 " nnoremap ; :
-" Map <CTRL>; so that <SHIFT>; and <CTRL>; (which is unmapped in Normal mode
-" both go to Command mode.  Plus, in Insert and Visual Mode make <CTRL>; go
-" to Command Mode too, skipping Normal Mode.
-nnoremap <C-;> :
-inoremap <C-;> <C-\><C-n>:
-vnoremap <C-;> <C-\><C-n>:
+" Map CTRL-C so that (in Normal mode, where it is alrealy almost a synonym for
+" <ESC>) it goes to Command mode.  And, similarly, in Insert and Visual mode
+" it goes to Command Mode too, skipping Normal Mode.  This then means CTRL-C
+" works like a master toggle between Normal and Command modes as well as going
+" there from the other modes.  Combined with belloff (turning the bell off)
+" the annoying bell when <ESC> is pressed in Normal mode is also deactivated.
+nnoremap <C-c> <ESC>:
+inoremap <C-c> <C-\><C-n>:
+vnoremap <C-c> <C-\><C-n>:
+
+" Turn the error bell off for whtn backspace or cursor movement results in an
+" error and also when ESC is pressed in Normal mode, which is annoying.
+set belloff=backspace,cursor,esc
 
 " Make the arrow keys work exclusively (down a wrapped text line) rather
 " than linewise which is a real pain. (:norm j etc. can be used if wanted)
 " Note that with the 40% keyboard this is gold because the Down, Up are
 " actually Upper-j and Upper-k.  The inoremaps are needed because gj and gk
-" are literals in Insert mode, so <C-o> for one command is needed to make it work the same in Insert mode.
+" are literals in Insert mode, so <C-o> for one command is needed to make it
+" work the same in Insert mode.
 nnoremap <Down> gj
 nnoremap <Up> gk
 inoremap <Down> <C-o>gj
