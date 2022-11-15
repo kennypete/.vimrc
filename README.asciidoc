@@ -45,8 +45,6 @@ modified
 - Indentation settings for shiftwidth, softtabstop, and expandtab (on)
 - Have smarttab (on)
 - Have showmode (on) because despite Airline being used for the status line
-- In Normal mode, map <CTRL>; to :
-- In Insert/Visual modes map <CTRL>; to <C-\><C-n>:
 - Mapping `<C-c>` to `<Esc>:` (and equivalents, e.g., `<C-\><C-n>:`; all modes)
 - Turning the error bell off for several instances where it adds no value
 - Making the arrow keys work exclusively through wrapped lines v. linewise
