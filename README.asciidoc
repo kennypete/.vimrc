@@ -2,15 +2,15 @@
 
 == linux
 
-My .vimrc, kept updated.  Vim will read a .vimrc symbolic link, so
-the easiest means to ensure a clean local repository is to have a `~/vimrc`
-folder (i.e., in the same location as the .vimrc used by Vim).  That also
-allows for a clean cloned git repository and for easy updating back to github.
+My .vimrc.  Vim will read a .vimrc symbolic link, so the easiest means to
+ensure a clean local repository is to have a `~/vimrc` folder (i.e., in the
+same location as the .vimrc used by Vim).  That also allows for a clean
+cloned git repository and for easy updating back to github.
 
 == windows
 
-My _vimrc, kept updated.  This should mirror the .vimrc, above, as there are
-no longer any things that should not work in Windows and Linux and vice versa.
+My _vimrc, which is a clone of the .vimrc, above, as there are no longer
+any things that should not work in Windows and Linux and vice versa.
 There are conditional sections to handle the differences, which are mostly
 around display.
 
@@ -19,78 +19,17 @@ around display.
 I have split my .vimrc into sections:
 
 [horizontal]
-01:: The default .vimrc file from B. Moolenaar, copied verbatim but then
-modified
-+
-- Q is not mapped to gq
-- One aspect of C programming excluded
-- Added DO command as an synonym for DiffOrig command (since it is so awesome)
-+
-02:: Windows and WSL handling
-+
-- Prevent startup in Replace mode when using WSL
-- Force utf-8
-- Set the font to DejaVu Sans Mono for Powerline
-+
-03:: Various additions from different sources (as noted)
-+
-- Mapleader to `<Space>`
-- Enabling Next/Prior buffer function, mapped to Tab/Shift-Tab in Normal mode
-- Highlighting search results
-- Mapping `<C-l>` to no highlight (:nohl) and redraw rather than just redraw
-- Force the status line to be 2 lines, which ensures the mode is displayed
-- Line numbers 3 numerals in length (min.)
-- Set `<leader>l` to toggle absolute and relative line numbering in Normal mode
-- Whichwrap allowing h and l to go over the ends of lines
-- Indentation settings for shiftwidth, softtabstop, and expandtab (on)
-- Have smarttab (on)
-- Have showmode (on) because despite Airline being used for the status line
-- Mapping `<C-c>` to `<Esc>:` (and equivalents, e.g., `<C-\><C-n>:`; all modes)
-- Turning the error bell off for several instances where it adds no value
-- Making the arrow keys work exclusively through wrapped lines v. linewise
-- Save with `<C-s>` in Normal mode
-- Command :digraphs with `<C-k>` in Normal mode
-- Virtual edit cycling with a function and `<leader>v`
-- Set nojoinlines so that J minimises spaces between lines
-- Highlighting of special characters and nbsp, trailing spaces, tab
-- Highlight the line being edited in Insert mode
-- Colour column 80 to show where the 80th column is
-+
-04:: Functions
-+
-- Generate Unicode table with `:GenerateUnicode(first, last)`
-- Code commenting: `<leader>c` will comment various file types over the
-current or visually selected line(s). including uncommenting where already
-commented
-+
-05:: Plugins information
-+
-- Although now empty, comments remain to explain the use of default plugins
-with Vim's own plugin management
-- The plugins being used still are listed
-+
-06 to 10:: [_Reserved for future use._ +
-_(perhaps split out 03 too)_]
-11:: Airline plugin settings/overrides
-+
-- Theme set to my own ansi_focus theme, run in a fork of vim-airline-themes
-that uses a very simple and clean theme with ANSI colours only
-- Mode map settings to be different to the default, which I left alone when
-my pull request to fix modes was accepted
-- Specification of separator characters and many other symbols characters
-- Turning on the tabline, which displays the buffers that are available, their
-status (changed, etc.) as well as their display (file name only)
-+
-77:: Deleted content (notes)
-+
-- Vim modes, which used to be a table, and is now in my asciidoc documentation
-- Pymode, since I am not using it
-+
-88:: Development area (if used)
-+
-- Currently empty
-+
-
+01:: Windows, WSL, GUI options.
+02:: Highlights
+03:: Settings (global)
+04:: Commands
+05:: Functions
+06:: Mappings
+07:: Autocommands
+08:: Plugins
+09:: Syntax + filetype
+88:: Deleted
+99:: Development
 
 == other Vim notes / random stuff
 
