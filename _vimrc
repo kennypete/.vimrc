@@ -56,11 +56,24 @@ endif
 " highlighted so that they are more obvious when editing documents.
 " These are in an autocmd group too, so that they re-set if a colorscheme is
 " called, and early in the .vimrc to ensure it is called if a colorscheme is.
-highlight CursorLineNr guifg=DarkGrey cterm=bold ctermfg=15
-highlight LineNr guifg=Grey ctermfg=8 "| Line numbers colours
-highlight NonText ctermfg=238 guifg=#d0d0d0 "| For the wrap chrs
-highlight SpecialKey ctermfg=Grey guibg=Grey guifg=White "| Tab, etc
-highlight ModeMsg ctermfg=252 cterm=bold gui=bold guifg=Grey
+if has("gui_running")
+  highlight CursorLineNr guifg=DarkGrey gui=bold
+  highlight LineNr guifg=Grey "| Line numbers colours
+  highlight NonText guifg=LightGrey "| For the wrap chrs
+  highlight SpecialKey guibg=LightGrey guifg=White "| Tab, etc
+  highlight ModeMsg guifg=DarkGrey gui=bold "| Modeline
+  highlight ColorColumn guibg=LightGrey "| Column at 80 etc
+  highlight CursorLine guibg=LightGrey "| Line the cursor's on
+else " Optimising for Windows Vim
+  highlight CursorLineNr ctermfg=Green cterm=bold
+  highlight LineNr ctermfg=DarkGrey "| Line numbers colours
+  highlight NonText ctermfg=DarkGrey "| For the wrap chrs
+  highlight SpecialKey ctermfg=Grey "| Tab, etc
+  highlight ModeMsg ctermfg=LightGrey cterm=bold "| Modeline
+  highlight ColorColumn ctermbg=DarkBlue "| Column at 80 etc
+  highlight CursorLine ctermbg=DarkBlue "| Line the cursor's on
+endif
+" This should reflect the above, but is not at the moment.
 augroup MyColors
     autocmd!
     autocmd ColorScheme * highlight LineNr guifg=Grey ctermfg=8
@@ -82,8 +95,7 @@ set clipboard=unnamed " Puts any yanked, deleted text into clipboard reg and *
 set cmdheight=2 " Cmd-line height 2 lines; avoid lots of press <Enter> to...
 set cmdwinheight=9 " Cmd-line window (q:) height: a few more lines v. default
 set colorcolumn=80 " Put a highlighted column at chr 80; refer <leader>I below
-" au InsertLeave *.* let &cursorline = 1 can be used to keep cursorline on
-set cursorlineopt=both " Highlight the line + linenumber when in Insert modes
+"set cursorlineopt=number,line " Highlight the line + number in insert modes
 set display=truncate " Show @@@ in last line if truncated
 set encoding=utf-8 " Character encoding used inside Vim itself, not files
 set expandtab   " Uses No. of spaces to insert a <Tab>s
@@ -500,6 +512,12 @@ if v:version > 899
       }
   augroup END
 endif " 2}}}
+" cursorline always on in Normal mode and Insert modes {{{2
+augroup cursorline
+  autocmd!
+  autocmd InsertLeave * set cursorlineopt=number | let &cursorline = 1
+  autocmd InsertEnter * set cursorlineopt=line,number | let &cursorline = 1
+augroup END " 2}}}
 " }}}
 " 08 Plugins {{{
 " I am now using the inbuilt Vim plugin handling.
