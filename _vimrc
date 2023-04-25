@@ -29,22 +29,28 @@ if has("gui_running")
     " KEEP cmd.exe default as that keeps gx working!
     "set shell=bash.exe " Vim plays nicest with Linux/bash, so exploit that
     " set shell=powershell.exe " system32\WindowsPowerShell\v1.0\powershell.exe
+  let $PYTHONPATH="~/AppData/Local/Programs/Python/Python311" " needed?
   endif
 else " No GUI, but Windows = console Vim; a more distinct Replace mode cursor
   if has("Win32")
     set guicursor=n-v-c-sm:block,o-r-cr:hor50,i-ci:hor25
     set lines=28
     set shell=powershell.exe
+    "let $PYTHONPATH="~/AppData/Local/Programs/Python/Python311" " needed?
+    " could look to doing a non-gui tabline here using the guitablabel content
+    " for the tabs?
   endif
 endif
 " Mini thesaurus: use if present
-if has("Win32")
-  if filereadable($HOME..'\vimfiles\mini-thesaurus.txt')
-    set thesaurus=$HOME\vimfiles\mini-thesaurus.txt
-  endif
-else
-  if filereadable($HOME..'/.vim/mini-thesaurus.txt')
-    set thesaurus=$HOME/.vim/mini-thesaurus.txt
+if v:version > 801
+  if has("Win32")
+    if filereadable($HOME..'\vimfiles\mini-thesaurus.txt')
+      set thesaurus=$HOME\vimfiles\mini-thesaurus.txt
+    endif
+  else
+    if filereadable($HOME..'/.vim/mini-thesaurus.txt')
+      set thesaurus=$HOME/.vim/mini-thesaurus.txt
+    endif
   endif
 endif
 " }}}
@@ -90,13 +96,19 @@ augroup END
 " section.
 set autoindent " Alhough local, useful if working with text files.
 set backspace=indent,eol,start " Allow backspacing everywhere in Insert mode
-set belloff=backspace,cursor,esc,insertmode " Turn off the bell!
-set clipboard=unnamed " Puts any yanked, deleted text into clipboard reg and *
+if v:version > 704 || (v:version == 704 && has("patch1147"))
+  set belloff=backspace,cursor,esc,insertmode " Turn off the bell!
+endif
+set clipboard=autoselect " Puts any Visual mode text into clipboard * register
 set cmdheight=2 " Cmd-line height 2 lines; avoid lots of press <Enter> to...
 set cmdwinheight=9 " Cmd-line window (q:) height: a few more lines v. default
-set colorcolumn=80 " Put a highlighted column at chr 80; refer <leader>I below
+if v:version > 702
+  set colorcolumn=80 " Put a highlighted column at chr 80; refer <leader>I below
+endif
 "set cursorlineopt=number,line " Highlight the line + number in insert modes
-set display=truncate " Show @@@ in last line if truncated
+if v:version > 799
+  set display=truncate " Show @@@ in last line if truncated
+endif
 set encoding=utf-8 " Character encoding used inside Vim itself, not files
 set expandtab   " Uses No. of spaces to insert a <Tab>s
 set foldclose=all " auto close folds when cursor leaves
@@ -113,12 +125,22 @@ set keywordprg=:help " Program used for K (jumps to the Word) - use Vim help
 set laststatus=2 " Always display statusline, even if when only one window
 " set lines is above in Windows/GUI section
 set list        " Shows tabs, eol, etc., and refer below for setlistchars
-set listchars=nbsp:°,trail:·,tab:——►,eol:¶ " highlight formatting /specials
-set matchpairs=(:),{:},[:],“:”,‘:’ " pairs to highlight when one's selected
+if v:version > 801
+  set listchars=nbsp:°,trail:·,tab:——►,eol:¶ " highlight formatting /specials
+else
+  set listchars=nbsp:°,trail:·,tab:—►,eol:¶ " highlight formatting /specials
+endif
+if v:version > 703
+  set matchpairs=(:),{:},[:],“:”,‘:’ " pairs to highlight when one's selected
+endif
 silent execute has('mouse') ? 'set mouse=ar' : '' | " enable in all modes
 " set mousehide is above in GUI section
-set nolangremap " prevent opt: may not be needed, but follows defaults.vim
-set nrformats=alpha,hex,bin " all except Octal for CTRL-A and CTRL-X
+if v:version > 799
+  set nolangremap " prevent opt: may not be needed, but follows defaults.vim
+endif
+if v:version > 704 || (v:version == 704 && has("patch1147"))
+  set nrformats=alpha,hex,bin " all except Octal for CTRL-A and CTRL-X
+endif
 silent execute (version < 900) ? '' : 'set nrformats+=unsigned'
 set number      " Display line numbers on the left and number width to 3
 set numberwidth=3 " Line number width to min of 3; expand if more
@@ -127,14 +149,16 @@ set printfont=FiraCode_NFM:h9 " This seems to keep things within 80chrs
 set printheader=%<%F %h %m (%L lines)%=Page %N " custom header, incl. lines
 set printoptions=number:y " prints with line numbers
 set pumheight=9 " limit the popup menu for Insert mode completion to 9 lines
-set pumwidth=18 " ... and increase the character width for popup menu items
+if v:version > 800
+  set pumwidth=18 " ... and increase the character width for popup menu items
+endif
 " set renderoptions is above in Windows/GUI section
 set scrolloff=99 " keep the cursor in the middle of the window
 set sessionoptions=buffers,curdir,folds,help,options,tabpages,winpos,winsize
 " set shell is above in Windows/GUI section
 set shiftwidth=2 " Spaces for each autoindent
 set shortmess=inxtToOs " Close to default; better treatment of long messages
-set showbreak=\\  " Show wrapped lines with backwards solidus
+set showbreak= " Show wrapped lines with U+E0B4
 set showcmd     " Display incomplete commands
 set showmatch   " Briefly jumps and shows matched { } ( ) [ ] when visible
 set showmode    " Show the mode you are in with --- INSERT --- et al.
@@ -157,7 +181,9 @@ set viewdir=$HOME/vimfiles/view " Dir to save views (prevents rw errors)
 set viminfo='100,<9999,s1000,h,rA:,rB:,r/tmp " viminfo file settings
 set virtualedit= " Default the virtual edit setting (but <leader>v below!)
 set whichwrap=b,s,h,l,>,<,~,],[ " Allow <Left>, etc., to wrap, all modes allowed
-set wildignorecase " ignore case when completing file names and directories
+if v:version > 703
+  set wildignorecase " ignore case when completing file names and directories
+endif
 set wildmenu    " display completion matches in a status line
 set winheight=3 " Minimum number of lines in current window
 set winminheight=3 " Minimum number of lines in each window
@@ -438,7 +464,9 @@ inoremap <F9> <C-\><C-N>:
 vnoremap <F9> <C-\><C-N>:
 onoremap <F9> <C-\><C-N>:
 cnoremap <F9> <Esc>
-tnoremap <F9> <C-W>c:
+if v:version > 800
+  tnoremap <F9> <C-W>c:
+endif
 
 " gk and gj for Up and Down screenwise
 " Up-down motions default behaviour and comments
@@ -501,23 +529,33 @@ augroup END " 2}}}
 if v:version > 899
   augroup colours " This was added only to test vim-tene
     autocmd!
-    autocmd ColorScheme gruvbox {
-        g:tene_hi = exists("g:tene_hi") ? g:tene_hi : {}
-        g:tene_hi['o'] = 'DiffDelete'
-        g:tene_hi['i'] = 'IncSearch'
-        g:tene_hi['r'] = 'DiffText'
-        g:tene_hi['v'] = 'DiffChange'
-        hi tene_x gui=italic guifg=#dadada guibg=#d5c4a1
-        g:tene_hi['x'] = 'tene_x'
-      }
+    "autocmd ColorScheme gruvbox {
+    "    g:tene_hi = exists("g:tene_hi") ? g:tene_hi : {}
+    "    g:tene_hi['o'] = 'DiffDelete'
+    "    g:tene_hi['i'] = 'IncSearch'
+    "    g:tene_hi['r'] = 'DiffText'
+    "    g:tene_hi['v'] = 'DiffChange'
+    "    hi tene_x gui=italic guifg=#dadada guibg=#d5c4a1
+    "    g:tene_hi['x'] = 'tene_x'
+    "  }
   augroup END
 endif " 2}}}
 " cursorline always on in Normal mode and Insert modes {{{2
 augroup cursorline
   autocmd!
-  autocmd InsertLeave * set cursorlineopt=number | let &cursorline = 1
+  autocmd InsertLeave * set cursorlineopt=line,number | let &cursorline = 1
   autocmd InsertEnter * set cursorlineopt=line,number | let &cursorline = 1
 augroup END " 2}}}
+" force Normal mode moving to an unmodifiable buffer {{{2
+" https://github.com/vim/vim/issues/12072
+augroup forcenormal
+  autocmd!
+  autocmd BufEnter * execute (!&modifiable && !&insertmode)
+        \ ? ':call feedkeys("\<Esc>")' : ''
+  autocmd BufEnter * execute (!&modifiable && &insertmode)
+        \ ? ':call feedkeys("\<C-L>")' : ''
+augroup END
+" 2}}}
 " }}}
 " 08 Plugins {{{
 " I am now using the inbuilt Vim plugin handling.
@@ -545,8 +583,12 @@ try
   let g:tene_modes = exists("g:tene_modes") ? g:tene_modes : {}
   let g:tene_modes["c"] = "CMDLINE" " Override for COMMAND-LINE
   let g:tene_modestate = 1 " Always show the state(), not just mode(1)
-  let g:tene_nowarn = 1 " No warning with Vim 8
-  packadd! vim-tene
+  let g:tene_8warn = 1 " Warning with Vim 8
+  if v:version > 704 || v:version == 704 && has('patch1485')
+    packadd! vim-tene
+  else
+    source $HOME/vimfiles/pack/plugins/opt/vim-tene/plugin/tene.vim
+  endif
 catch " But, if vim-tene is unavailable or fails, create a basic statusline
   set statusline=\ %-6.(%{mode(1)..'\ '..state()}%)\ b%n%<\ %t\ %m\ %r\ %h%=%y
   set statusline+=\ %{&fileencoding}\ %{&fileformat}
@@ -555,7 +597,9 @@ catch " But, if vim-tene is unavailable or fails, create a basic statusline
 endtry
 " }}}
 " 09 Syntax + filetype {{{
-syntax enable " syntax h/l; could be 'on' and/or test for t_Co/has('syntax')
+if v:version > 704 || (v:version == 704 && has("patch1147"))
+  syntax enable " syntax h/l; could be 'on' and/or test for t_Co/has('syntax')
+endif
 filetype plugin indent on " Refer :filetype-overview  Current status :filetype
 "}}}
 " 88 Deleted {{{
@@ -587,6 +631,54 @@ filetype plugin indent on " Refer :filetype-overview  Current status :filetype
 " if tabpagenr('$') > 1
   " set tabline+='%=%#TabLine#%999Xclose'
 " endif
-" }}}
 "set tabline=%{%join(tabpagebuflist('%'),'\ ˙\ ')..' %t'%}
+
+
+	" function MyTabLine()
+	  " let s = ''
+	  " for i in range(tabpagenr('$'))
+"	    select the highlighting
+	    " if i + 1 == tabpagenr()
+	      " let s ..= '%#TabLineSel#'
+	    " else
+	      " let s ..= '%#TabLine#'
+	    " endif
+" 
+"	    set the tab page number (for mouse clicks)
+	    " let s ..= '%' .. (i + 1) .. 'T'
+" 
+"	    the label is made by MyTabLabel()
+	    " let s ..= ' %{MyTabLabel(' .. (i + 1) .. ')} '
+	  " endfor
+" 
+"	  after the last tab fill with TabLineFill and reset tab page nr
+	  " let s ..= '%#TabLineFill#%T'
+" 
+"	  right-align the label to close the current tab page
+	  " if tabpagenr('$') > 1
+	    " let s ..= '%=%#TabLine#%999Xclose'
+	  " endif
+" 
+	  " return s
+	" endfunction
+" 
+" Now the MyTabLabel() function is called for each tab page to get its label. >
+" 
+	" function MyTabLabel(n)
+	  " let buflist = tabpagebuflist(a:n)
+	  " let winnr = tabpagewinnr(a:n)
+	  " return bufname(buflist[winnr - 1])
+	" endfunction
+
+let g:mbuf = {}
+command! -nargs=1 -complete=command Mb let g:mbuf[<q-args>] = bufnr('%')
+command! -nargs=1 -complete=command Gb execute ":b" .. g:mbuf[<q-args>]
+
+" In au group, ideally read the mode before entering the buffer, so maybe use
+" BufLeave to set that and use the mode at BufLeave and read that at
+" BufEnter?  The following could also be used, however, it only does with
+" ModeChanged, so v:event can't be used with BufEnter.
+" autocmd ModeChanged *:* let vevent=string(v:event) | redrawstatus!
+
+" }}}
 " vim: textwidth=79 foldmethod=marker filetype=vim expandtab
