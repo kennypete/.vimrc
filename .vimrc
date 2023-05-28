@@ -239,7 +239,7 @@ command! -nargs=1 -complete=command Cbum redir @x |
             \   let winid = popup_menu(g:lr, #{time: 8000}) |
             \ else |
             \   let winid = popup_menu(g:lr, #{ callback: {id, result ->
-                  \ execute("if " .. result .. " > 0 | sbuffer " ..
+                  \ execute("if " .. result .. " > 0 | buffer " ..
                   \ str2nr(split(g:lr[result-1])[0]) .. " | endif" ..
                   \ " | if &buftype=='help' | set nolist | endif", "") } }) |
             \ endif
@@ -266,6 +266,9 @@ endif
 " to do is "pp to put the contents of that register p to the buffer
 " in Normal mode
 command! -nargs=+ -complete=command Rp redir @p | silent execute <q-args> | redir END
+
+" -- Command Ct - provides a popup of the time it takes to run a command
+command! -nargs=+ -complete=command Ct let g:start = reltime() | silent execute <q-args> | let g:elapsed = reltimestr(reltime(g:start, reltime())) | call popup_menu(g:elapsed, {})
 " }}}
 " 05 Functions {{{
 "
@@ -493,6 +496,13 @@ vnoremap <C-Up> gk
 " Note that with the 40% keyboard this is gold because the Down, Up are
 " I turned these off because it makes the statusline jump too much and when
 " in insert mode the functionality is not so bad anyhow.
+"
+"Toggle renderer in Windows
+" needs a if gui, if win32, and if directx
+if has('gui') && has ('Win32') && has('directx')
+  nnoremap <Leader>r <Cmd>execute "let &rop = (len(&rop)==0) ? 'type:directx,gamma:1.0,geom:0,renmode:5,taamode:1' : ''"<CR>
+  "nnoremap <Leader>r <Cmd>execute "let &rop = (len(&rop)==0 && has('gui') && has ('Win32') && has('directx')) ? 'type:directx,gamma:1.0,geom:0,renmode:5,taamode:1' : ''"<CR>
+endif
 " }}}
 " 07 Autocommands {{{
 " vimStartup {{{2
@@ -561,14 +571,18 @@ augroup END
 " I am now using the inbuilt Vim plugin handling.
 " * Plugins path: $HOME/.vim/pack/plugins  $HOME\vimfiles\pack\plugins
 " * To determine the remote git repository: git remote show origin
-" Plugins in use (20230225):
+"    https://github.com/madox2/vim-ai.git
+if v:version > 802
+  packadd! vim-ai
+endif
 "   https://github.com/habamax/vim-asciidoctor.git
+packadd! vim-asciidoctor
+let g:asciidoctor_allow_uri_read = " -a allow-uri-read"
 "   https://github.com/kennypete/vim-sents.git (my own vim9script plugin)
+packadd! vim-sents
 "   https://github.com/kennypete/vim-characterize.git (a fork, incl. my tools)
-"   ADD kennypete/vim-tene.git here once I put it into github!!!!!!!!!
-" -----------------------------------------------------
-" Statusline - vim-tene with Vim9 and airline with Vim8
-" -----------------------------------------------------
+packadd! vim-characterize
+"   https://github.com/kennypete/vim-tene.git
 "For testing colorschemes with vim-tene:
 "set bg=dark
 "set bg=light
@@ -577,13 +591,12 @@ try
   let g:tene_ga = exists("g:tene_ga") ? g:tene_ga : {}
   let g:tene_ga["line()"] = ['¶', ''] " Use pilcrow for line numbers ASCII
   let g:tene_hi = exists("g:tene_hi") ? g:tene_hi : {}
-  if has("gui_running")
-    let g:tene_hi['x'] = 'Conceal' " Override for Inactive statuslines
-  endif
+  let g:tene_hi['x'] = 'Conceal' " Override for Inactive statuslines
   let g:tene_modes = exists("g:tene_modes") ? g:tene_modes : {}
   let g:tene_modes["c"] = "CMDLINE" " Override for COMMAND-LINE
   let g:tene_modestate = 1 " Always show the state(), not just mode(1)
   let g:tene_8warn = 1 " Warning with Vim 8
+  " packadd was not a thing until v704.1485
   if v:version > 704 || v:version == 704 && has('patch1485')
     packadd! vim-tene
   else
@@ -681,4 +694,58 @@ command! -nargs=1 -complete=command Gb execute ":b" .. g:mbuf[<q-args>]
 " autocmd ModeChanged *:* let vevent=string(v:event) | redrawstatus!
 
 " }}}
+
+" --------------------------
+" COMMAND LINE NORMAL 'MODE'
+" --------------------------
+" Look to using g:r and g:f etc. for r, f, t, commands
+" Look to using g:00 for {n} before other commands
+function! Truncate() abort
+  let g:num = strlen(getcmdline()) - (strlen(getcmdline()) - getcmdpos())
+  let @" = strpart(getcmdline(), 0, g:num)
+endfunction
+function! CommandLineNormal() abort
+  " not handled: n{char}; multiple chars, e.g., dl, but a commented example
+  " has been retained to show how it could work, noting d would then have the
+  " obligatory delay before executing; f could maybe be made to work with a
+  " function? (for now it is <Nop>);
+  " ideas from https://github.com/tpope/vim-rsi/blob/master/plugin/rsi.vim
+  execute maparg('0', 'c') == '' ? 'cnoremap 0 <Home>' : 'cunmap 0'
+  execute maparg('$', 'c') == '' ? 'cnoremap $ <End>' : 'cunmap $'
+  execute maparg('a', 'c') == '' ? 'cnoremap a <Right><Cmd>call CommandLineNormal()<CR>' : 'cunmap a'
+  execute maparg('b', 'c') == '' ? 'cnoremap b <C-Left>' : 'cunmap b'
+  execute maparg('c', 'c') == '' ? 'cnoremap c <Cmd>call CommandLineNormal()<CR>' : 'cunmap c'
+  execute maparg('d0', 'c') == '' ? 'cnoremap d0 <C-U>' : 'cunmap d0'
+  execute maparg('dd', 'c') == '' ? 'cnoremap dd <End><C-U>' : 'cunmap dd'
+  execute maparg('dl', 'c') == '' ? 'cnoremap dl <Del>' : 'cunmap dl'
+  execute maparg('dh', 'c') == '' ? 'cnoremap dh <Backspace>' : 'cunmap dh'
+  execute maparg('e', 'c') == '' ? 'cnoremap e <C-Right>' : 'cunmap e'
+  execute maparg('f', 'c') == '' ? 'cnoremap f <Nop>' : 'cunmap f'
+  execute maparg('g', 'c') == '' ? 'cnoremap g <Nop>' : 'cunmap g'
+  execute maparg('h', 'c') == '' ? 'cnoremap h <Left>' : 'cunmap h'
+  execute maparg('i', 'c') == '' ? 'cnoremap i <Cmd>call CommandLineNormal()<CR>' : 'cunmap i'
+  execute maparg('j', 'c') == '' ? 'cnoremap j <Down>' : 'cunmap j'
+  execute maparg('k', 'c') == '' ? 'cnoremap k <Up>' : 'cunmap k'
+  execute maparg('l', 'c') == '' ? 'cnoremap l <Right>' : 'cunmap l'
+  execute maparg('m', 'c') == '' ? 'cnoremap m <Nop>' : 'cunmap m'
+  execute maparg('n', 'c') == '' ? 'cnoremap n <Nop>' : 'cunmap n'
+  execute maparg('o', 'c') == '' ? 'cnoremap o <Cmd>call CommandLineNormal()<CR>' : 'cunmap o'
+  execute maparg('p', 'c') == '' ? 'cnoremap p <C-R>"' : 'cunmap p'
+  execute maparg('q', 'c') == '' ? 'cnoremap q <Nop>' : 'cunmap q'
+  execute maparg('r', 'c') == '' ? 'cnoremap r <Nop>' : 'cunmap r'
+  execute maparg('R', 'c') == '' ? 'cnoremap R <Insert>' : 'cunmap R'
+  execute maparg('s', 'c') == '' ? 'cnoremap s <Del><Cmd>call CommandLineNormal()<CR>' : 'cunmap s'
+  execute maparg('t', 'c') == '' ? 'cnoremap t <Nop>' : 'cunmap t'
+  execute maparg('u', 'c') == '' ? 'cnoremap u <Nop>' : 'cunmap u'
+  execute maparg('v', 'c') == '' ? 'cnoremap v <Nop>' : 'cunmap v'
+  execute maparg('w', 'c') == '' ? 'cnoremap w <C-Right>' : 'cunmap w'
+  execute maparg('x', 'c') == '' ? 'cnoremap x <Del>' : 'cunmap x'
+  execute maparg('X', 'c') == '' ? 'cnoremap X <C-U>' : 'cunmap X'
+  "execute maparg('y', 'c') == '' ? 'cnoremap y <Del>' : 'cunmap y'
+  execute maparg('Y', 'c') == '' ? 'cnoremap Y <Cmd>let @"=getcmdline()<CR>' : 'cunmap Y'
+  "execute maparg('<C-x>', 'c') == '' ? 'cnoremap <C-X> <End><C-U>' : 'cunmap <C-x>'
+endfunction
+cnoremap <C-n> <Cmd>call CommandLineNormal()<CR>
+cnoremap <C-s> <Cmd>call Truncate()<CR>
+
 " vim: textwidth=79 foldmethod=marker filetype=vim expandtab
