@@ -1,22 +1,29 @@
-= .vimrc
+= My .vimrc (and .gvimrc)
 
-== linux
+== Linux
 
 My .vimrc.  Vim will read a .vimrc symbolic link, so the easiest means to
 ensure a clean local repository is to have a `~/vimrc` folder (i.e., in the
 same location as the .vimrc used by Vim).  That also allows for a clean
 cloned git repository and for easy updating back to github.
 
-== windows
+== Windows
 
 My _vimrc, which is a clone of the .vimrc, above, as there are no longer
 any things that should not work in Windows and Linux and vice versa.
 There are conditional sections to handle the differences, which are mostly
 around display.
 
-== sections
+== GUI
 
-I have split my .vimrc into sections:
+The GUI is applicable to both operating systems.  From 2023-07-15,
+I separated most of the GUI-specific things to a .gvimrc / _gvimrc - this
+was driven by making a specific Toolbar for gvim.  It is also the
+recommended way of keeping GUI-related setting distinct.
+
+== Sections
+
+I have split my .vimrc / _vimrc into sections:
 
 [horizontal]
 01:: Windows, WSL, GUI options.
@@ -31,7 +38,10 @@ I have split my .vimrc into sections:
 88:: Deleted
 99:: Development
 
-== other Vim notes / random stuff
+The .gvimrc / _gvimrc are similarly structured, with the exception of
+an _heading_ *77* (GUI toolbar).
+
+== Other Vim notes / random stuff
 
 There are numerous learnings on Vim all the time. I continue to record
 those in https://github.com/kennypete/asciidoc/blob/main/vim.asciidoc and

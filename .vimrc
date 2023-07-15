@@ -1,41 +1,47 @@
 " .vimrc
 " 01 Windows, WSL, GUI options {{{
-" Windows Gvim stores the '.vimrc' as '_vimrc' in the home directory.
+" Windows Vim/Gvim stores the '.vimrc' as '_vimrc' in the home directory.
 " The following are changes made so that the experience using Windows Gvim
-" and WSL, are optimal.  They could be in a . or _ gvimrc, but that would
-" require two files, which makes for more maintenance and harder debugging.
+" and WSL, are optimal.
+" From 2023-07-15 use a .gvimrc / _gvimrc; despite being two separate files,
+" that is the recommended approach.  It is particularly useful for separate
+" gui-only things, like customising the Toolbar.
 "
 " Prevent startup in Replace mode in WSL (no impact native Linux/Win32)
 set t_u7=
 if has("gui_running")
-  " allow lines to be as long as you like - easier sometimes to read
-  set nowrap
-  " don't hide the mouse cursor when something is typed - low value
-  set nomousehide
-  " set guifont=DejaVu_Sans_Mono_for_Powerline:h12
-  " Set gvim-specific font to ensure display of special characters
-  " however, for WSL the font can be set in the
-  " WSL Properties dialog, but the font should also be installed
-  set guifont=FiraCode_NFM:h12 " https://www.nerdfonts.com/font-downloads
-  " extend default guioptions to...
-  set guioptions+=!abceghLmrtT
-  " customise the tabline for when using vim9-tene
-  if version > 899
-    set guitablabel=%{%join(tabpagebuflist('%'),'\ ˙\ ')..' %t'%}
-  endif
-  if has("Win32")
-    " set renderoptions=type:directx " 'glyphs more beautiful', coloured emoji
-    "                                   BUT ligatures in coding fonts ... NO!
-    " KEEP cmd.exe default as that keeps gx working!
-    "set shell=bash.exe " Vim plays nicest with Linux/bash, so exploit that
-    " set shell=powershell.exe " system32\WindowsPowerShell\v1.0\powershell.exe
-  let $PYTHONPATH="~/AppData/Local/Programs/Python/Python311" " needed?
-  endif
+" MOVED TO _gvimrc
+"  " allow lines to be as long as you like - easier sometimes to read
+"  set nowrap
+"  " don't hide the mouse cursor when something is typed - low value
+"  set nomousehide
+"  " set guifont=DejaVu_Sans_Mono_for_Powerline:h12
+"  " Set gvim-specific font to ensure display of special characters
+"  " however, for WSL the font can be set in the
+"  " WSL Properties dialog, but the font should also be installed
+"  set guifont=FiraCode_NFM:h12 " https://www.nerdfonts.com/font-downloads
+"  " extend default guioptions to...
+"  set guioptions+=!abceghLmrtT
+"  " customise the tabline for when using vim9-tene
+"  if version > 899
+"    set guitablabel=%{%join(tabpagebuflist('%'),'\ ˙\ ')..' %t'%}
+"  endif
+"  if has("Win32")
+"    " set renderoptions=type:directx " 'glyphs more beautiful', coloured emoji
+"    "                                   BUT ligatures in coding fonts ... NO!
+"    " KEEP cmd.exe default as that keeps gx working!
+"    "set shell=bash.exe " Vim plays nicest with Linux/bash, so exploit that
+"    " set shell=powershell.exe " system32\WindowsPowerShell\v1.0\powershell.exe
+"    let $PYTHONPATH="~/AppData/Local/Programs/Python/Python311" " needed?
+"  endif
 else " No GUI, but Windows = console Vim; a more distinct Replace mode cursor
+  " Only partially works in console Win32, but use it nonetheless (guicursor)
   if has("Win32")
     set guicursor=n-v-c-sm:block,o-r-cr:hor50,i-ci:hor25
     set lines=28
-    set shell=powershell.exe
+    " Keep cmd.exe, but you can use "powershell" from the command line to
+    " start powershell anyway
+    " set shell=powershell.exe
     "let $PYTHONPATH="~/AppData/Local/Programs/Python/Python311" " needed?
     " could look to doing a non-gui tabline here using the guitablabel content
     " for the tabs?
@@ -71,7 +77,7 @@ if has("gui_running")
   highlight ColorColumn guibg=LightGrey "| Column at 80 etc
   highlight CursorLine guibg=LightGrey "| Line the cursor's on
 else " Optimising for Windows Vim
-  highlight CursorLineNr ctermfg=Green cterm=bold
+  highlight CursorLineNr ctermfg=White cterm=bold
   highlight LineNr ctermfg=DarkGrey "| Line numbers colours
   highlight NonText ctermfg=DarkGrey "| For the wrap chrs
   highlight SpecialKey ctermfg=Grey "| Tab, etc
@@ -497,12 +503,9 @@ vnoremap <C-Up> gk
 " I turned these off because it makes the statusline jump too much and when
 " in insert mode the functionality is not so bad anyhow.
 "
-"Toggle renderer in Windows
-" needs a if gui, if win32, and if directx
-if has('gui') && has ('Win32') && has('directx')
-  nnoremap <Leader>r <Cmd>execute "let &rop = (len(&rop)==0) ? 'type:directx,gamma:1.0,geom:0,renmode:5,taamode:1' : ''"<CR>
-  "nnoremap <Leader>r <Cmd>execute "let &rop = (len(&rop)==0 && has('gui') && has ('Win32') && has('directx')) ? 'type:directx,gamma:1.0,geom:0,renmode:5,taamode:1' : ''"<CR>
-endif
+"Toggle renderer in Windows: needs a if gui, if win32, and if directx; moved
+"to _gvimrc since is is so specific to Win32 gui.
+
 " }}}
 " 07 Autocommands {{{
 " vimStartup {{{2
@@ -536,25 +539,27 @@ augroup skeletons
   endif
 augroup END " 2}}}
 " colorschemes {{{2
-if v:version > 899
-  augroup colours " This was added only to test vim-tene
-    autocmd!
-    "autocmd ColorScheme gruvbox {
-    "    g:tene_hi = exists("g:tene_hi") ? g:tene_hi : {}
-    "    g:tene_hi['o'] = 'DiffDelete'
-    "    g:tene_hi['i'] = 'IncSearch'
-    "    g:tene_hi['r'] = 'DiffText'
-    "    g:tene_hi['v'] = 'DiffChange'
-    "    hi tene_x gui=italic guifg=#dadada guibg=#d5c4a1
-    "    g:tene_hi['x'] = 'tene_x'
-    "  }
-  augroup END
-endif " 2}}}
+" if v:version > 899
+"   augroup colours " This was added only to test vim-tene
+"     autocmd!
+"     autocmd ColorScheme gruvbox {
+"         g:tene_hi = exists("g:tene_hi") ? g:tene_hi : {}
+"         g:tene_hi['o'] = 'DiffDelete'
+"         g:tene_hi['i'] = 'IncSearch'
+"         g:tene_hi['r'] = 'DiffText'
+"         g:tene_hi['v'] = 'DiffChange'
+"         hi tene_x gui=italic guifg=#dadada guibg=#d5c4a1
+"         g:tene_hi['x'] = 'tene_x'
+"       }
+"   augroup END
+" endif " 2}}}
 " cursorline always on in Normal mode and Insert modes {{{2
 augroup cursorline
   autocmd!
-  autocmd InsertLeave * set cursorlineopt=line,number | let &cursorline = 1
-  autocmd InsertEnter * set cursorlineopt=line,number | let &cursorline = 1
+  autocmd InsertLeave * set cursorlineopt=number | let &cursorline = 1
+  autocmd InsertEnter * set cursorlineopt=number | let &cursorline = 1
+  "autocmd InsertLeave * set cursorlineopt=line,number | let &cursorline = 1
+  "autocmd InsertEnter * set cursorlineopt=line,number | let &cursorline = 1
 augroup END " 2}}}
 " force Normal mode moving to an unmodifiable buffer {{{2
 " https://github.com/vim/vim/issues/12072
@@ -627,74 +632,6 @@ filetype plugin indent on " Refer :filetype-overview  Current status :filetype
 " https://github.com/kennypete/.vimrc/blob/86db077d1039a4cd43b5d67f050bca1f4f2e8a91/_vimrc
 " }}}
 " 99 Development {{{
-" Tabline?
-" set tabline=
-" for i in range(tabpagenr('$'))
-  " if i + 1 == tabpagenr()
-    " set tabline+='%#TabLineSel#'
-  " else
-    " set tabline+='%#TabLine#'
-  " endif
-  " set tabline+=%{'%'..(i+1)..'T'}
-  " set tabline+='\ '
-  " set tabline+=%{%bufname(tabpagewinnr(1))%}
-" endfor
-" set tabline+='%#TabLineFill#'
-" #set tabline+='%T'
-" if tabpagenr('$') > 1
-  " set tabline+='%=%#TabLine#%999Xclose'
-" endif
-"set tabline=%{%join(tabpagebuflist('%'),'\ ˙\ ')..' %t'%}
-
-
-	" function MyTabLine()
-	  " let s = ''
-	  " for i in range(tabpagenr('$'))
-"	    select the highlighting
-	    " if i + 1 == tabpagenr()
-	      " let s ..= '%#TabLineSel#'
-	    " else
-	      " let s ..= '%#TabLine#'
-	    " endif
-" 
-"	    set the tab page number (for mouse clicks)
-	    " let s ..= '%' .. (i + 1) .. 'T'
-" 
-"	    the label is made by MyTabLabel()
-	    " let s ..= ' %{MyTabLabel(' .. (i + 1) .. ')} '
-	  " endfor
-" 
-"	  after the last tab fill with TabLineFill and reset tab page nr
-	  " let s ..= '%#TabLineFill#%T'
-" 
-"	  right-align the label to close the current tab page
-	  " if tabpagenr('$') > 1
-	    " let s ..= '%=%#TabLine#%999Xclose'
-	  " endif
-" 
-	  " return s
-	" endfunction
-" 
-" Now the MyTabLabel() function is called for each tab page to get its label. >
-" 
-	" function MyTabLabel(n)
-	  " let buflist = tabpagebuflist(a:n)
-	  " let winnr = tabpagewinnr(a:n)
-	  " return bufname(buflist[winnr - 1])
-	" endfunction
-
-let g:mbuf = {}
-command! -nargs=1 -complete=command Mb let g:mbuf[<q-args>] = bufnr('%')
-command! -nargs=1 -complete=command Gb execute ":b" .. g:mbuf[<q-args>]
-
-" In au group, ideally read the mode before entering the buffer, so maybe use
-" BufLeave to set that and use the mode at BufLeave and read that at
-" BufEnter?  The following could also be used, however, it only does with
-" ModeChanged, so v:event can't be used with BufEnter.
-" autocmd ModeChanged *:* let vevent=string(v:event) | redrawstatus!
-
-" }}}
-
 " --------------------------
 " COMMAND LINE NORMAL 'MODE'
 " --------------------------
@@ -747,5 +684,82 @@ function! CommandLineNormal() abort
 endfunction
 cnoremap <C-n> <Cmd>call CommandLineNormal()<CR>
 cnoremap <C-s> <Cmd>call Truncate()<CR>
+
+" augroup beronowrite
+"   autocmd!
+"   autocmd BufEnter * let &write = &readonly==1 ? 0 : 1
+" augroup END
+
+" ***********************
+" Tabline?
+" ***********************
+" set tabline=
+" for i in range(tabpagenr('$'))
+  " if i + 1 == tabpagenr()
+    " set tabline+='%#TabLineSel#'
+  " else
+    " set tabline+='%#TabLine#'
+  " endif
+  " set tabline+=%{'%'..(i+1)..'T'}
+  " set tabline+='\ '
+  " set tabline+=%{%bufname(tabpagewinnr(1))%}
+" endfor
+" set tabline+='%#TabLineFill#'
+" #set tabline+='%T'
+" if tabpagenr('$') > 1
+  " set tabline+='%=%#TabLine#%999Xclose'
+" endif
+"set tabline=%{%join(tabpagebuflist('%'),'\ ˙\ ')..' %t'%}
+
+	" function MyTabLine()
+	  " let s = ''
+	  " for i in range(tabpagenr('$'))
+"	    select the highlighting
+	    " if i + 1 == tabpagenr()
+	      " let s ..= '%#TabLineSel#'
+	    " else
+	      " let s ..= '%#TabLine#'
+	    " endif
+" 
+"	    set the tab page number (for mouse clicks)
+	    " let s ..= '%' .. (i + 1) .. 'T'
+" 
+"	    the label is made by MyTabLabel()
+	    " let s ..= ' %{MyTabLabel(' .. (i + 1) .. ')} '
+	  " endfor
+" 
+"	  after the last tab fill with TabLineFill and reset tab page nr
+	  " let s ..= '%#TabLineFill#%T'
+" 
+"	  right-align the label to close the current tab page
+	  " if tabpagenr('$') > 1
+	    " let s ..= '%=%#TabLine#%999Xclose'
+	  " endif
+" 
+	  " return s
+	" endfunction
+" 
+" Now the MyTabLabel() function is called for each tab page to get its label. >
+" 
+	" function MyTabLabel(n)
+	  " let buflist = tabpagebuflist(a:n)
+	  " let winnr = tabpagewinnr(a:n)
+	  " return bufname(buflist[winnr - 1])
+	" endfunction
+
+" ***********************************
+" Mark a buffer and go to a buffer
+" ***********************************
+let g:mbuf = {}
+command! -nargs=1 -complete=command Mb let g:mbuf[<q-args>] = bufnr('%')
+command! -nargs=1 -complete=command Gb execute ":b" .. g:mbuf[<q-args>]
+
+" In au group, ideally read the mode before entering the buffer, so maybe use
+" BufLeave to set that and use the mode at BufLeave and read that at
+" BufEnter?  The following could also be used, however, it only does with
+" ModeChanged, so v:event can't be used with BufEnter.
+" autocmd ModeChanged *:* let vevent=string(v:event) | redrawstatus!
+
+" }}}
 
 " vim: textwidth=79 foldmethod=marker filetype=vim expandtab
