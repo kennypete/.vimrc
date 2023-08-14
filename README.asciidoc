@@ -38,8 +38,7 @@ I have split my `.vimrc` / `&#x5F;vimrc` into sections:
 88:: Deleted
 99:: Development
 
-The `.gvimrc` / `&#x5F;gvimrc` are similarly structured, with the exception of
-a _heading_ *77* (GUI toolbar).
+The `.gvimrc` / `&#x5F;gvimrc` are similarly structured.
 
 == Other Vim notes / random stuff
 

@@ -1,5 +1,5 @@
 " .vimrc
-" 01 Windows, WSL, GUI options {{{
+" 01 Windows, WSL specific options {{{
 " Windows Vim/Gvim stores the '.vimrc' as '_vimrc' in the home directory.
 " The following are changes made so that the experience using Windows Gvim
 " and WSL, are optimal.
@@ -59,6 +59,22 @@ if v:version > 801
     endif
   endif
 endif
+" Autocommand to create the log directory if it doesn't exist
+" create the log directory in the _gvimrc when in the GUI, otherwise toolbar
+" unmenu gets written
+if has("Win32")
+  if !isdirectory(expand($HOME) . '\vimfiles\logs')
+    silent! call mkdir($HOME . '\vimfiles\logs', 'p')
+  endif
+  let g:verbose_log_filename = $HOME . '\vimfiles\logs\' . strftime('%Y-%m-%dT%H%M%S.log')
+else
+  if !isdirectory(expand($HOME) . '/.vim/logs')
+    silent! call mkdir($HOME . '/.vim/logs', 'p')
+  endif
+  let g:verbose_log_filename = $HOME . '/.vim/logs/' . strftime('%Y-%m-%dT%H%M%S.log')
+endif
+"Turning off verbose logging...
+"let &verbosefile=g:verbose_log_filename
 " }}}
 " 02 Highlights {{{
 " There are not a lot of .vimrc highlights as I accept defaults for many
@@ -68,39 +84,53 @@ endif
 " highlighted so that they are more obvious when editing documents.
 " These are in an autocmd group too, so that they re-set if a colorscheme is
 " called, and early in the .vimrc to ensure it is called if a colorscheme is.
-if has("gui_running")
-  highlight CursorLineNr guifg=DarkGrey gui=bold
-  highlight LineNr guifg=Grey "| Line numbers colours
-  highlight NonText guifg=LightGrey "| For the wrap chrs
-  highlight SpecialKey guibg=LightGrey guifg=White "| Tab, etc
-  highlight ModeMsg guifg=DarkGrey gui=bold "| Modeline
-  highlight ColorColumn guibg=LightGrey "| Column at 80 etc
-  highlight CursorLine guibg=LightGrey "| Line the cursor's on
-else " Optimising for Windows Vim
-  highlight CursorLineNr ctermfg=White cterm=bold
-  highlight LineNr ctermfg=DarkGrey "| Line numbers colours
-  highlight NonText ctermfg=DarkGrey "| For the wrap chrs
-  highlight SpecialKey ctermfg=Grey "| Tab, etc
-  highlight ModeMsg ctermfg=LightGrey cterm=bold "| Modeline
-  highlight ColorColumn ctermbg=DarkBlue "| Column at 80 etc
-  highlight CursorLine ctermbg=DarkBlue "| Line the cursor's on
-endif
-" This should reflect the above, but is not at the moment.
-augroup MyColors
-    autocmd!
-    autocmd ColorScheme * highlight LineNr guifg=Grey ctermfg=8
-      \ | highlight CursorLineNr guifg=DarkGrey cterm=bold ctermfg=15
-      \ | highlight NonText ctermfg=238 guifg=#d0d0d0
-      \ | highlight SpecialKey ctermfg=Grey guibg=Grey guifg=White
-      \ | highlight ModeMsg ctermfg=252 cterm=bold gui=bold guifg=Grey
+" Optimising for Windows Vim (non-GUI - refer _gvimrc for GUI)
+highlight CursorLineNr ctermfg=White cterm=bold
+highlight LineNr ctermfg=DarkGrey "| Line numbers colours
+highlight NonText ctermfg=DarkGrey "| For the wrap chrs
+highlight SpecialKey ctermfg=Grey "| Tab, etc
+highlight ModeMsg ctermfg=LightGrey cterm=bold "| Modeline
+highlight ColorColumn ctermbg=DarkBlue "| Column at 80 etc
+highlight CursorLine ctermbg=DarkBlue "| Line the cursor's on
+augroup MyColours
+  autocmd!
+  autocmd ColorScheme * ColorSchemeChanged()
 augroup END
+" Function to handle the ColorSchemeChange event - this sets the highlights
+" above and in the .gvimrc / _gvimrc back to what I want them to be again,
+" regardless of what colorscheme is chosen.
+function ColorSchemeChanged()
+  if has("gui_running")
+    highlight ColorColumn guibg=LightGrey
+    highlight CursorLineNr guifg=DarkGrey gui=bold
+    highlight LineNr guifg=Grey
+    highlight ModeMsg guifg=DarkGrey gui=bold
+    highlight NonText guifg=LightGrey guibg=White
+    highlight SpecialKey guibg=LightGrey guifg=White
+  elseif !has("gui_running")
+    highlight ColorColumn ctermbg=DarkBlue
+    highlight CursorLineNr ctermfg=White cterm=bold
+    highlight LineNr ctermfg=DarkGrey
+    highlight ModeMsg ctermfg=LightGrey cterm=bold
+    highlight NonText ctermfg=DarkGrey
+    highlight SpecialKey ctermfg=Grey
+  elseif has("unix") && !has("gui_running")
+    " nothing for now - I think these were for Debian 11 native, GUI perhaps?
+    " highlight CursorLineNr guifg=DarkGrey cterm=bold ctermfg=15
+    " highlight LineNr guifg=Grey ctermfg=8
+    " highlight NonText ctermfg=238 guifg=#d0d0d0
+    " highlight SpecialKey ctermfg=Grey guibg=Grey guifg=White
+    " highlight ModeMsg ctermfg=252 cterm=bold gui=bold guifg=Grey
+  else
+    " Default behavior otherwise
+  endif
+endfunction
 " }}}
 " 03 Settings (global) {{{
 " Vim can be run with "-u NONE" or "-C" to not load a vimrc.
 " Individual settings can be reverted with ":set option&" in most cases.
 " For global settings that are left with the defaults, refer the end of this
 " section.
-set autoindent " Alhough local, useful if working with text files.
 set backspace=indent,eol,start " Allow backspacing everywhere in Insert mode
 if v:version > 704 || (v:version == 704 && has("patch1147"))
   set belloff=backspace,cursor,esc,insertmode " Turn off the bell!
@@ -117,6 +147,7 @@ if v:version > 799
 endif
 set encoding=utf-8 " Character encoding used inside Vim itself, not files
 set expandtab   " Uses No. of spaces to insert a <Tab>s
+set fileformats=unix,dos
 set foldclose=all " auto close folds when cursor leaves
 set foldcolumn=1 " Show folds in a single column; equiv. let &foldcolumn = 1
 set foldlevelstart=0 " Start editing with all folds closed
@@ -140,15 +171,11 @@ if v:version > 703
   set matchpairs=(:),{:},[:],“:”,‘:’ " pairs to highlight when one's selected
 endif
 silent execute has('mouse') ? 'set mouse=ar' : '' | " enable in all modes
-" set mousehide is above in GUI section
+" don't hide the mouse cursor when something is typed - low value
+set nomousehide
 if v:version > 799
   set nolangremap " prevent opt: may not be needed, but follows defaults.vim
 endif
-if v:version > 704 || (v:version == 704 && has("patch1147"))
-  set nrformats=alpha,hex,bin " all except Octal for CTRL-A and CTRL-X
-endif
-silent execute (version < 900) ? '' : 'set nrformats+=unsigned'
-set number      " Display line numbers on the left and number width to 3
 set numberwidth=3 " Line number width to min of 3; expand if more
 " set operatorfunc is defined in the map section (xnoremap <F8>) section
 set printfont=FiraCode_NFM:h9 " This seems to keep things within 80chrs
@@ -183,6 +210,7 @@ set timeout     " Wait for mapping or key sequences
 set title       " Ensures filename [+=-] (path) - VIM in the titlestring
 set ttimeout    " time out on key codes, though superfluous with timeout 'on'
 set ttimeoutlen=100 " wait up to 100ms after Esc for special key
+set verbose=0
 set viewdir=$HOME/vimfiles/view " Dir to save views (prevents rw errors)
 set viminfo='100,<9999,s1000,h,rA:,rB:,r/tmp " viminfo file settings
 set virtualedit= " Default the virtual edit setting (but <leader>v below!)
@@ -230,7 +258,17 @@ set winminheight=3 " Minimum number of lines in each window
 " wildignore; wildmode; wildoptions; winaltkeys; window; winheight;
 " winminwidth; winptydll; wrapscan; write; writebackup; writedelay; xtermcodes
 " 2}}}
-" }}}
+" {{{2 Local settings that I want initially (usually)
+set autoindent " Alhough local, useful if working with text files.
+if v:version > 704 || (v:version == 704 && has("patch1147"))
+  set nrformats=alpha,hex,bin " all except Octal for CTRL-A and CTRL-X
+endif
+silent execute (version < 900) ? '' : 'set nrformats+=unsigned'
+set number      " Display line numbers on the left and number width to 3
+" nowrap  Prefer to not wrap initially - turn it on if wanted
+set nowrap
+" 2}}}
+" " }}}
 " 04 Commands {{{
 "
 " -- COMMAND Cbum — creates a popup menu of the output of a command
@@ -244,7 +282,9 @@ command! -nargs=1 -complete=command Cbum redir @x |
             \ if len(g:lr) == 1 |
             \   let winid = popup_menu(g:lr, #{time: 8000}) |
             \ else |
-            \   let winid = popup_menu(g:lr, #{ callback: {id, result ->
+            \   let winid = popup_menu(g:lr,
+                  \ #{borderchars:[ '', ' ', '', ' ', '', '', '', ''],
+                  \ callback: {id, result ->
                   \ execute("if " .. result .. " > 0 | buffer " ..
                   \ str2nr(split(g:lr[result-1])[0]) .. " | endif" ..
                   \ " | if &buftype=='help' | set nolist | endif", "") } }) |
@@ -258,7 +298,12 @@ command! -nargs=+ -complete=command Cpop redir @x |
             \ silent execute <q-args> | redir END |
             \ let @y = substitute(strtrans(@x),'\^@','|','g') |
             \ let g:lr = split(@y, "|") |
-            \ let winid = popup_menu(lr, #{time: 8000})
+            \ let winid = popup_menu(g:lr,
+            \ #{borderchars:[ '', ' ', '', ' ', '', '', '', ''],
+            \ time: 8000})
+"           \ let winid = popup_menu(g:lr, #{time: 8000})
+"            \ #{borderchars:[ '═', '║', '═', '║', '╒', '╕', '╝', '╚'],
+"            \ #{borderchars:[ '─', '│', '─', '│', '╭', '╮', '╯', '╰'],
 "
 " -- COMMAND DiffOrig — displays a diff between the buffer and the file loaded
 if !exists(":DiffOrig")
@@ -275,6 +320,15 @@ command! -nargs=+ -complete=command Rp redir @p | silent execute <q-args> | redi
 
 " -- Command Ct - provides a popup of the time it takes to run a command
 command! -nargs=+ -complete=command Ct let g:start = reltime() | silent execute <q-args> | let g:elapsed = reltimestr(reltime(g:start, reltime())) | call popup_menu(g:elapsed, {})
+command! -nargs=+ -complete=command Cpop2 redir @x |
+            \ silent execute <q-args> | redir END |
+            \ let winid = popup_menu(@x, #{time: 8000})
+" -- Command B - uses g:GoToBufferInTabs8(n) to go to the buffer number
+command! -nargs=1 -complete=command B silent execute ":call g:GoToBufferInTab8(" .. <f-args> .. ')'
+" Mark a buffer and go to a buffer (uses :B command, above)
+let g:mbuf = {}
+command! -nargs=1 -complete=command Mb g:mbuf[<q-args>] = bufnr('%')
+command! -nargs=1 -complete=command Gb execute ':B ' .. g:mbuf[<q-args>]
 " }}}
 " 05 Functions {{{
 "
@@ -418,6 +472,26 @@ function! ToggleLineNumber() abort
     set norelativenumber
   endif
 endfunction
+" Function to write a message to the log file
+function! WriteVerboseLog() abort
+  let g:timestamp = strftime('%Y-%m-%dT%H%M%S')
+  execute 'silent! write! >> ' .. &verbosefile .. ' | echom "Vim started at " .. g:timestamp'
+endfunction
+" Function to go to a buffer wherever it appears in any tab (first instance)
+function g:GoToBufferInTab8(b)
+  let c = tabpagenr()
+  for t in range(tabpagenr('$'))
+    execute ':norm ' .. (t + 1) .. 'gt'
+    for w in range(1, winnr('$'))
+      if winbufnr(w) == a:b
+        execute ':' .. w .. 'wincmd w'
+        return
+      endif
+    endfor
+  endfor
+  execute ':norm ' .. c .. 'gt'
+  echo "Buffer not found in any window."
+endfunction
 " }}}
 " 06 Mappings {{{
 " Using silent execute enables a | to add a comment :)
@@ -427,8 +501,8 @@ let mapleader = ' '                       " can be remaped to leader in Normal
 silent execute 'nnoremap <C-K> i<C-K>' | " Enter :digraphs from Normal mode too
 silent execute 'nnoremap <C-L> :nohl<CR><C-L>' | " Redraw screen AND h/l off
 silent execute 'nnoremap <C-S> :%sm_x_y_gc<C-Left><Right><Right>' | " CTRL-S
-nnoremap <silent> <Tab> :call NextBuffer(1)<CR>
-nnoremap <silent> <S-Tab> :call NextBuffer(-1)<CR>
+"nnoremap <silent> <Tab> :call NextBuffer(1)<CR>
+"nnoremap <silent> <S-Tab> :call NextBuffer(-1)<CR>
 
 " xmap — Visual mode mappings
 silent execute 'xnoremap <C-S> :sm_x_y_gc<S-Left>' | " CTRL-S 'template' :%sm
@@ -445,8 +519,8 @@ noremap <leader>i :exe "set colorcolumn=80 \| set textwidth=79"<CR>
 noremap <leader>I :exe "set colorcolumn=0 \| set textwidth=0"<CR>
 noremap <silent> <leader>l :call ToggleLineNumber()<CR>
 noremap <silent> <leader>c :call ToggleComment()<cr>
-noremap <silent><leader>b :Cbum buffers<cr>
-noremap <silent><leader><S-b> :Cbum buffers!<cr>
+noremap <silent><leader>b :CpBuffersMenu buffers<CR>
+noremap <silent><leader><S-b> :CpBuffersMenu buffers!<CR>
 
 " imap — Insert mode mappings
 silent execute 'inoremap <C-U> <C-G>u<C-U>' | " Bram recommended undo atom
@@ -577,6 +651,14 @@ augroup END
 " * Plugins path: $HOME/.vim/pack/plugins  $HOME\vimfiles\pack\plugins
 " * To determine the remote git repository: git remote show origin
 "    https://github.com/madox2/vim-ai.git
+function Packadd(aplugin)
+  try
+    packadd! a:aplugin
+  catch
+    echo "Could not load plugin " .. a:aplugin
+  endtry
+endfunction
+" call Packadd("vim-testing")
 if v:version > 802
   packadd! vim-ai
 endif
@@ -584,7 +666,12 @@ endif
 packadd! vim-asciidoctor
 let g:asciidoctor_allow_uri_read = " -a allow-uri-read"
 "   https://github.com/kennypete/vim-sents.git (my own vim9script plugin)
-packadd! vim-sents
+if v:version > 801
+  packadd! vim-sents
+endif
+"   https://github.com/kennypete/vim-popped.git
+let g:vim_popped_nowarn = 1
+packadd! vim-popped
 "   https://github.com/kennypete/vim-characterize.git (a fork, incl. my tools)
 packadd! vim-characterize
 "   https://github.com/kennypete/vim-tene.git
@@ -631,7 +718,7 @@ filetype plugin indent on " Refer :filetype-overview  Current status :filetype
 " wanted for whatever reason, the setup as at 6/7/2022 is at:
 " https://github.com/kennypete/.vimrc/blob/86db077d1039a4cd43b5d67f050bca1f4f2e8a91/_vimrc
 " }}}
-" 99 Development {{{
+" 95 Development {{{
 " --------------------------
 " COMMAND LINE NORMAL 'MODE'
 " --------------------------
@@ -760,6 +847,11 @@ command! -nargs=1 -complete=command Gb execute ":b" .. g:mbuf[<q-args>]
 " ModeChanged, so v:event can't be used with BufEnter.
 " autocmd ModeChanged *:* let vevent=string(v:event) | redrawstatus!
 
-" }}}
 
+"augroup vimEnter
+"  autocmd!
+"  autocmd VimEnter * call WriteVerboseLog()
+"augroup END
+
+" }}}
 " vim: textwidth=79 foldmethod=marker filetype=vim expandtab
