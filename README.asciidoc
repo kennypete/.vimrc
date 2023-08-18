@@ -1,32 +1,63 @@
 = My .vimrc (and .gvimrc)
 
+== vim9script
+
+I rebuilt my `.vimrc` and `.gvimrc` as vim9script in July/August 2023.  That
+was a valuable exercise as it helped me purge unused things.
+It also de-cluttered because I'd made the vimscript version handle all sorts
+of versions before vim9, all the way back to 7.x (which is now deprecated,
+though still handled in the `&#x5F;vimrc8` and `&#x5F;gvimrc8` files).
+
+== Structure
+
+With vim9script allowing an initial vimscript section, the approach taken is
+to have the `.vimrc` only source `&#x5F;vimrc8` and `&#x5F;gvimrc8` (if using
+the GUI) when the version is before 8.2.3434.  Version is 9 (or 8.2.3434
+onwards where vim9script works adequately) use the `.vimrc`, or `&#x5F;vimrc`,
+which are identical, &#x201C;natively&#x201D;.  (Similarly, the `.gvimrc`
+or `&#x5F;gvimrc`.)  So, this is what happens:
+
+[cols="1,4"]
+|===
+|Version and patch |Loads (all) | Loads (GUI)
+
+|*gvim* 9 or >=8.2.3434 | .vimrc | .gvimrc
+|*gvim* <8.2.3434 | .vimrc8 (sourced in .vimrc) | .gvimrc8 (sourced in .vimrc)
+|*vim* 9 or >=8.2.3434 | .vimrc | 
+|*vim* <8.2.3434 | .vimrc8 (sourced in .vimrc) | 
+|===
+
 == Linux
 
-My `.vimrc`.  Vim will read a `.vimrc` symbolic link, so the easiest means to
+Vim will read a `.vimrc` symbolic link, so the easiest means to
 ensure a clean local repository is to have a `~/vimrc` folder (i.e., in the
 same location as the `.vimrc` used by Vim).  That also allows for a clean
-cloned git repository and for easy updating back to github.
+cloned git repository and for easy updating back to github.  If the GUI is
+used, similarly, have a symbolic link to `~/vimrc` folder and have the
+`.gvimrc` in there too.
 
 == Windows
 
-My `&#x5F;vimrc`, which is a clone of the `.vimrc`, above, as there are no
-longer any things that should not work in Windows and Linux and vice versa.
-There are conditional sections to handle the differences, which are mostly
-around display.
+The `&#x5F;vimrc` is a clone of the `.vimrc`; there is nothing in either that
+is incompatible with the latter operating system.  That is, everything
+should work in Windows and Linux and vice versa.
+There are some conditional sections to handle the differences, though those
+are mostly around display.
 
 == GUI
 
 The GUI is applicable to both operating systems.  From 2023-07-15,
 I separated most of the GUI-specific things to a `.gvimrc` / `&#x5F;gvimrc` -
 this was driven by making a specific Toolbar for gvim.  It is also the
-recommended way of keeping GUI-related setting distinct.
+recommended way of keeping GUI-related settings distinct.  This has grown a
+bit but it is still nowhere near as large as the `.vimrc`, which makes sense.
 
 == Sections
 
-I have split my `.vimrc` / `&#x5F;vimrc` into sections:
+The `.vimrc` / `&#x5F;vimrc` is split into sections:
 
 [horizontal]
-01:: Windows, WSL, GUI options.
+01:: Windows, WSL specific options
 02:: Highlights
 03:: Settings (global)
 04:: Commands
