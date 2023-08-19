@@ -136,7 +136,9 @@ set belloff=backspace,cursor,error,esc,insertmode,showmatch
 #   browsedir  If applicable, incl. Win32, browse the _buffer's_ directory
 set browsedir=buffer
 #   cdhome  :cd, etc., changes current working directory to $HOME, like Linux
-set cdhome
+if v:versionlong >= 8023780
+  set cdhome
+endif
 #   clipboard  Puts Visual mode selected text into selection register "*
 set clipboard=autoselect
 #   cmdheight  Makes its height two lines; avoid lots of "press <Enter> to..."
@@ -315,7 +317,9 @@ set wildignorecase
 #   wildmenu  Display completion matches for things like :colorscheme <Tab>
 set wildmenu
 #   wildoptions  Use a popup menu for wildmenu lists, which is nicer (IMO)
-set wildoptions=pum
+if v:versionlong >= 8024325
+  set wildoptions=pum
+endif
 #   winheight  Minimal number of lines for the current window
 set winheight=3
 #   winminheight  Minimum number of lines for non-current windows
