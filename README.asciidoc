@@ -17,19 +17,40 @@ onwards where vim9script works adequately) use the `.vimrc`, or `&#x5F;vimrc`,
 which are identical, &#x201C;natively&#x201D;.  (Similarly, the `.gvimrc`
 or `&#x5F;gvimrc`.)  So, this is what happens:
 
-[cols="1,4"]
+[cols="1,1,1"]
 |===
 |Version and patch |Loads (all) | Loads (GUI)
 
-|*gvim* 9 or >=8.2.3434 | .vimrc | .gvimrc
-|*gvim* <8.2.3434 | .vimrc8 (sourced in .vimrc) | .gvimrc8 (sourced in .vimrc)
-|*vim* 9 or >=8.2.3434 | .vimrc | 
-|*vim* <8.2.3434 | .vimrc8 (sourced in .vimrc) | 
+|*gvim* 900 or >=802 patch 3434 | _vimrc | _gvimrc
+|*gvim* <802 patch 3434 | _vimrc8 (sourced by _vimrc) | _gvimrc8 (sourced by
+_vimrc)
+|*vim* 900 or >=802 patch 3434 | _vimrc | 
+|*vim* <802 patch 3434 | _vimrc8 (sourced by _vimrc) | 
 |===
+
+[NOTE]
+.vimrc and .gvimrc are clones of _vimrc and _gvimrc respectively.
+They will be used by Linux OSs, WSL, etc.
+
+There are only a few things in the vim9script `_vimrc` that are not compatible
+with versions before the current version (9.0.1677).  However, it is possible
+to utilise features in later versions as they come up.  In those instances it
+is necessary to make those only called with a `v:versionlong` conditional
+test, e.g.:
+
+[source,vimscript]
+----
+if v:versionlong >= 8023780
+  set cdhome
+endif
+----
 
 == Linux
 
-Vim will read a `.vimrc` symbolic link, so the easiest means to
+If the GUI is not needed, using .vimrc and .vimrc8 (if necessary) directly
+in the `$HOME` directory is the simplest approach.
+
+Alternatively, Vim will read a `.vimrc` symbolic link, so another means to
 ensure a clean local repository is to have a `~/vimrc` folder (i.e., in the
 same location as the `.vimrc` used by Vim).  That also allows for a clean
 cloned git repository and for easy updating back to github.  If the GUI is
@@ -41,6 +62,7 @@ used, similarly, have a symbolic link to `~/vimrc` folder and have the
 The `&#x5F;vimrc` is a clone of the `.vimrc`; there is nothing in either that
 is incompatible with the latter operating system.  That is, everything
 should work in Windows and Linux and vice versa.
+
 There are some conditional sections to handle the differences, though those
 are mostly around display.
 
