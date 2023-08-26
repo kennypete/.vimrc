@@ -408,7 +408,7 @@ command! -nargs=1 -complete=command Gb execute ':B ' .. g:mbuf[<q-args>]
 # }}}
 # 05 Functions {{{
 # Cycle virtualedit local setting {{{2
-def FcycleVirtualEdit()
+def g:FcycleVirtualEdit()
   if &virtualedit == "all"
     set virtualedit=block
   elseif &virtualedit == "block"
@@ -424,7 +424,7 @@ def FcycleVirtualEdit()
 enddef
 # 2}}}
 # Generate Unicode Characters Table {{{2
-def FgenerateUnicode(first: number, last: number)
+def g:FgenerateUnicode(first: number, last: number)
   var i = first
   while i <= last
     @c = printf('%04X ', i) .. '	'
@@ -454,19 +454,19 @@ enddef
 # 2}}}
 # Popup mode code {{{2
 # Makes a popup notification with the current mode and state - for debugging
-def Fpopupmode()
+def g:Fpopupmode()
   popup_notification(mode(1) .. state(), {time: 555})
 enddef
 # 2}}}
 # Set numberwidth option by the number of lines in the buffer {{{2
-def FsetNumberWidth()
+def g:FsetNumberWidth()
   var num_lines = line('$')
   var new_width = len(num_lines) + 2
   execute 'set numberwidth=' .. new_width
 enddef
 # 2}}}
 # Toggle current window wrapping {{{2
-def FwindowWrapToggle()
+def g:FwindowWrapToggle()
   if &wrap == v:false
     set wrap
   else
@@ -477,7 +477,7 @@ enddef
 # Toggle code commenting of selected or current line {{{2
 g:comment_map = {"python": '#', "sh": '#', "bat": 'REM', "vbs": "'",
 \ "omnimark": ";", "vim": '#'}
-def FtoggleComment()
+def g:FtoggleComment()
   if has_key(g:comment_map, &filetype)
     var comment_leader = g:comment_map[&filetype]
     if getline('.') =~ "^\\s*" .. comment_leader .. " "
@@ -498,7 +498,7 @@ def FtoggleComment()
 enddef
 # 2}}}
 # Toggle line numbers - literal > relative > none {{{2
-def FtoggleLineNumber()
+def g:FtoggleLineNumber()
   if !&number
     set number
     set norelativenumber
@@ -511,7 +511,7 @@ def FtoggleLineNumber()
 enddef
 # 2}}}
 # Try and catch packadd! a plugin; echo a message if it fails {{{2
-def Fpackadd(aplugin: string): void
+def g:Fpackadd(aplugin: string): void
   try
     # This must use execute, not just packadd! because of passing the arg
     execute "packadd! " .. aplugin
@@ -521,14 +521,14 @@ def Fpackadd(aplugin: string): void
 enddef
 # 2}}}
 # XFCE cursor shapes {{{2
-def FcustomCursorBLOCK()
+def g:FcustomCursorBLOCK()
   if isdirectory('~/.config/xfce4')
     if filewritable('~/.config/xfce4/terminal/terminalrc')
         silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_IBEAM/TERMINAL_CURSOR_SHAPE_BLOCK/' ~/.config/xfce4/terminal/terminalrc"
     endif
   endif
 enddef
-def FcustomCursorIBEAM()
+def g:FcustomCursorIBEAM()
   if isdirectory('~/.config/xfce4')
     if filewritable('~/.config/xfce4/terminal/terminalrc')
       silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_BLOCK/TERMINAL_CURSOR_SHAPE_IBEAM/' ~/.config/xfce4/terminal/terminalrc"
@@ -546,12 +546,12 @@ nnoremap <Space> <Nop>
 g:mapleader = ' '
 # 2}}}
 #  [nore]map — Normal, Visual, Operator Pending modes mappings {{{2
-noremap <Leader>v :call FcycleVirtualEdit()<CR>
-noremap <Leader>w :call FwindowWrapToggle()<CR>
+noremap <Leader>v :call g:FcycleVirtualEdit()<CR>
+noremap <Leader>w :call g:FwindowWrapToggle()<CR>
 noremap <silent><Leader>i :exe "set colorcolumn=80 <bar> set textwidth=78"<CR>
 noremap <silent><Leader>I :exe "set colorcolumn=0 <bar> set textwidth=0"<CR>
-noremap <silent><Leader>l :call FtoggleLineNumber()<CR>
-noremap <silent><Leader>c :call FtoggleComment()<CR>
+noremap <silent><Leader>l :call g:FtoggleLineNumber()<CR>
+noremap <silent><Leader>c :call g:FtoggleComment()<CR>
 # vim9-popped - noremap <silent><Leader>b :CpopupBuffersMenu buffers<CR>
 # vim9-popped - noremap <silent><Leader>b :CpopupBuffersMenu buffers!<CR>
 # 2}}}
@@ -650,7 +650,7 @@ augroup END
 #       FsetNumberWidth() on entering a buffer {{{2
 augroup triggersetnumberwidth
   autocmd!
-  autocmd BufEnter * FsetNumberWidth()
+  autocmd BufEnter * g:FsetNumberWidth()
 augroup END
 # 2}}}
 #       skeletons (templates) {{{2
@@ -704,14 +704,14 @@ augroup END
 # "Y" 	https://github.com/kennypete/vim-tene
 # vim-ai - only use where vim9 and Python3 alignment
 if v:version >= 900
-  Fpackadd('vim-ai')
+  g:Fpackadd('vim-ai')
 endif
 g:asciidoctor_allow_uri_read = " -a allow-uri-read"
-Fpackadd("vim-asciidoctor")
-Fpackadd("vim-characterize")
-# Fpackadd("vim-combining2")
-Fpackadd("vim-popped")
-Fpackadd("vim-sents")
+g:Fpackadd("vim-asciidoctor")
+g:Fpackadd("vim-characterize")
+# g:Fpackadd("vim-combining2")
+g:Fpackadd("vim-popped")
+g:Fpackadd("vim-sents")
 # vim-tene (my own highly configurable and flexible statusline)
 try
   # Create the g:tene_ga dictionary, if necessary
