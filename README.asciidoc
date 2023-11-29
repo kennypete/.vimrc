@@ -12,10 +12,11 @@ though still handled in the `&#x5F;vimrc8` and `&#x5F;gvimrc8` files).
 
 With vim9script allowing an initial vimscript section, the approach taken is
 to have the `.vimrc` only source `&#x5F;vimrc8` and `&#x5F;gvimrc8` (if using
-the GUI) when the version is before 8.2.3434.  Version is 9 (or 8.2.3434
-onwards where vim9script works adequately) use the `.vimrc`, or `&#x5F;vimrc`,
-which are identical, &#x201C;natively&#x201D;.  (Similarly, the `.gvimrc`
-or `&#x5F;gvimrc`.)  So, this is what happens:
+the GUI) when the version is before 8.2.3434.
+
+If the version is 9 (or 8.2.3434 onwards where vim9script works adequately)
+the `.vimrc`, or `&#x5F;vimrc`, is used.  Those files are identical.
+(Similarly, the `.gvimrc` or `&#x5F;gvimrc`.)  So, this is what happens:
 
 [cols="1,1,1"]
 |===
@@ -29,14 +30,15 @@ _vimrc)
 |===
 
 [NOTE]
-.vimrc and .gvimrc are clones of _vimrc and _gvimrc respectively.
+To repeat, .vimrc and .gvimrc are clones of _vimrc and _gvimrc respectively.
 They will be used by Linux OSs, WSL, etc.
 
 There are only a few things in the vim9script `_vimrc` that are not compatible
-with versions before the current version (9.0.1677).  However, it is possible
+with versions before the version 9.0.x.  However, it is possible
 to utilise features in later versions as they come up.  In those instances it
 is necessary to make those only called with a `v:versionlong` conditional
-test, e.g.:
+test, e.g., because the option `cdhome` was not available until version 8.2
+with patch 3780:
 
 [source,vimscript]
 ----
@@ -69,10 +71,11 @@ are mostly around display.
 == GUI
 
 The GUI is applicable to both operating systems.  From 2023-07-15,
-I separated most of the GUI-specific things to a `.gvimrc` / `&#x5F;gvimrc` -
-this was driven by making a specific Toolbar for gvim.  It is also the
-recommended way of keeping GUI-related settings distinct.  This has grown a
-bit but it is still nowhere near as large as the `.vimrc`, which makes sense.
+I separated most of the GUI-specific things into a `.gvimrc` /
+`&#x5F;gvimrc` - this was driven by making a specific Toolbar for gvim.
+It is also the recommended way of keeping GUI-related settings distinct.
+This has grown a bit but it is still nowhere near as large as the `.vimrc`,
+which makes sense.
 
 == Sections
 
@@ -93,8 +96,3 @@ The `.vimrc` / `&#x5F;vimrc` is split into sections:
 
 The `.gvimrc` / `&#x5F;gvimrc` are similarly structured.
 
-== Other Vim notes / random stuff
-
-There are numerous learnings on Vim all the time. I continue to record
-those in https://github.com/kennypete/asciidoc/blob/main/vim.asciidoc and
-will migrate relevant content into the .vimrc when worthwhile.

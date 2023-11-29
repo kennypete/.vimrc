@@ -14,7 +14,7 @@ if (v:version < 802 || (v:version == 802 && !has('patch3434')))
       source $HOME/_gvimrc8
     endif
   catch
-    echom "Failed sourcing _vimrc8 / _gvimrc8"
+    echom "There was an error while sourcing _vimrc8 / _gvimrc8"
   endtry
   finish
 endif
@@ -27,14 +27,27 @@ vim9script
 #
 # Prevent startup in Replace mode in WSL (no impact native Linux/Win32)
 set t_u7=
-if (has("Win32") || has("Win64")) && !has("gui_running")
-  # No GUI, but Windows = console Vim; a more distinct Replace mode cursor
-  # Only partially works in console Win32, but use it nonetheless (guicursor)
-  set guicursor=n-v-c-sm:block,o-r-cr:hor50,i-ci:hor25
-  set lines=28
-  # Keep cmd.exe as the default terminal in Windows (and you can
-  # use "powershell" from the terminal to start powershell anyhow)
+# Non-GUI cursors.  (GUI is simple and handled in .gvimrc/_gvimrc)
+# NB: This does not work in the way outlined in the Vim help, i.e., with
+# guicursor supposedly partly used in Win32 console partly - no, it doesn't!
+# This too much trial and error...
+# Ultimately, the three commands below work for ALL of these, for me anyhow:
+# - WSL Debian running non-GUI vim (&term == xterm-256color)
+# - Git Bash MINGW64 running non-GUI vim (&term == xterm)
+# - Win32 Console vim.exe run from File Explorer
+# - Win32 Console vim.exe run from PowerShell (7.4.0) or Windows PowerShell
+#  %SystemRoot%\syswow64\WindowsPowerShell\v1.0\powershell.exe
+#  C:\Program Files\PowerShell\7\pwsh.exe" -WorkingDirectory ~
+if !has("gui_running")
+  &t_EI = "\<esc>[1 q"   # blinking block
+  &t_SI = "\<esc>[5 q"   # blinking I-beam in insert mode
+  &t_SR = "\<esc>[3 q"   # blinking _underline in replace mode
 endif
+# # set lines=28  # Commented out (for PowerShell) - it makes things go awry
+# # There is no clean way of determining whether you are in PowerShell or
+# # the Win32 Console run from File Explorer.
+# # Keep cmd.exe as the default terminal in Windows (noting you can
+# # use pwsh from the terminal to start PowerShell anyhow)
 # Mini thesaurus: use if present
 if has("Win32") || has("Win64")
   if filereadable($HOME .. '\vimfiles\mini-thesaurus.txt')
@@ -710,14 +723,31 @@ g:asciidoctor_allow_uri_read = " -a allow-uri-read"
 g:Fpackadd("vim-asciidoctor")
 g:Fpackadd("vim-characterize")
 # g:Fpackadd("vim-combining2")
+g:borderchars = ['', ' ', '', ' ', '', '', '', '']
 g:Fpackadd("vim-popped")
 g:Fpackadd("vim-sents")
 # vim-tene (my own highly configurable and flexible statusline)
 try
   # Create the g:tene_ga dictionary, if necessary
   g:tene_ga = exists("g:tene_ga") ? g:tene_ga : {}
-  # Use pilcrow for line numbers ASCII
-  g:tene_ga["line()"] = ['¶', '']
+  # Use pilcrow for line numbers ASCII and non-GUI (e.g., PowerShell)
+  if has("gui_running")
+    g:tene_ga["line()"] = ['¶', '']
+  else
+    g:tene_ga["line()"] = ['¶', '¶']
+  endif
+  if !has("gui_running")
+    # Use c with caron rather than Nerd font character when PowerShell, et al.
+    g:tene_ga["virtcol()"] = ['|', 'č']
+    g:tene_ga["mod"] = ['[+]', 'м']
+    g:tene_ga["noma"] = ['[-]', 'ӿ']
+    g:tene_ga["pvw"] = ['[Preview]', '[Preview]']
+    g:tene_ga["spell"] = ['S', 'ѕ']
+    g:tene_ga["key"] = ['E', 'ю']
+    g:tene_ga["paste"] = ['P', 'р']
+    g:tene_ga["recording"] = ['@', '@']
+    g:tene_ga["ro"] = ['[RO]', 'ф]']
+  endif
   # Create the g:tene_hi dictionary, if necessary
   g:tene_hi = exists("g:tene_hi") ? g:tene_hi : {}
   # Override for Inactive statuslines
