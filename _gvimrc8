@@ -69,7 +69,11 @@ highlight SpecialKey guibg=LightGrey guifg=White
 set columns=85
 " Set gvim-specific font to ensure display of special characters.  For WSL the
 " font can be set in WSL Properties dialog, but the font should be installed.
-set guifont=FiraCode_NFM:h12 " https://www.nerdfonts.com/font-downloads
+if has('gui_gtk3')
+  set guifont=FiraCode\ Nerd\ Font\ Mono\ Regular\ 12
+elseif has('gui_win32')
+  set guifont=FiraCode_NFM:h12 " https://www.nerdfonts.com/font-downloads
+endif
 set guioptions+=!abceghLmrtT " extend default guioptions to...
 set guioptions-=m " but then remove (use toolbar to toggle Menu)...
 " !	External commands are executed in a terminal window
@@ -86,7 +90,7 @@ set guioptions-=m " but then remove (use toolbar to toggle Menu)...
 " t	Include tearoff menu items.
 " T	Include Toolbar.
 if version > 899 " customise the tabline for when using vim9-tene
-  set guitablabel=%{%join(tabpagebuflist('%'),'\ ˙\ ')..' %t'%}
+  set guitablabel=%{%join(tabpagebuflist('%'),'\ ˙\ ')..'\ %t'%}
 endif
 "   guitabtooltip  Consider using this.  Maybe a function; make it useful?
 " set renderoptions - :h 'renderoptions'
@@ -102,9 +106,8 @@ endif
 "   let $PYTHONPATH=#~/AppData/Local/Programs/Python/Python311# # needed?
 " endif
 " All of these are in the .vimrc / _vimrc.  There are none needed here
-"   titlestring= This is also set in .vimrc, but it's overridden for gvim here
-" All of these are in the .vimrc / _vimrc.  There are none needed here
-"   titlestring= This is also set in .vimrc, but it's overridden for gvim here
+"   titlestring= This is set in .vimrc too, but overridden for gvim only here
+set titlestring=%{expand(\"%:p\")}\ %{&modified&&&buftype!='terminal'?'\ +':''}%{&readonly?'\ RO':''}%{(!&modifiable&&mode()!=#'t')?'\ -':''}%{&buftype=='help'?'\ HLP':''}
 " }}}
 " 04 Commands (none yet for gvim specifically) {{{
 " }}}

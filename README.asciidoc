@@ -3,8 +3,8 @@
 == vim9script
 
 I rebuilt my `.vimrc` and `.gvimrc` as vim9script in July/August 2023.  That
-was a valuable exercise as it helped me purge unused things.
-It also de-cluttered because I'd made the vimscript version handle all sorts
+was a valuable exercise because it helped me purge unused things.
+It also de-cluttered because I’d made the vimscript version handle all sorts
 of versions before vim9, all the way back to 7.x (which is now deprecated,
 though still handled in the `&#x5F;vimrc8` and `&#x5F;gvimrc8` files).
 
@@ -14,7 +14,7 @@ With vim9script allowing an initial vimscript section, the approach taken is
 to have the `.vimrc` only source `&#x5F;vimrc8` and `&#x5F;gvimrc8` (if using
 the GUI) when the version is before 8.2.3434.
 
-If the version is 9 (or 8.2.3434 onwards where vim9script works adequately)
+If the version is 9 (or 8.2.3434 onwards, where vim9script works adequately)
 the `.vimrc`, or `&#x5F;vimrc`, is used.  Those files are identical.
 (Similarly, the `.gvimrc` or `&#x5F;gvimrc`.)  So, this is what happens:
 
@@ -30,15 +30,15 @@ _vimrc)
 |===
 
 [NOTE]
-To repeat, .vimrc and .gvimrc are clones of _vimrc and _gvimrc respectively.
-They will be used by Linux OSs, WSL, etc.
+To repeat, .vimrc and .gvimrc are **clones** of _vimrc and _gvimrc respectively.
+They will be used by Linux, WSL, etc.
 
 There are only a few things in the vim9script `_vimrc` that are not compatible
 with versions before the version 9.0.x.  However, it is possible
 to utilise features in later versions as they come up.  In those instances it
 is necessary to make those only called with a `v:versionlong` conditional
-test, e.g., because the option `cdhome` was not available until version 8.2
-with patch 3780:
+test.  An example is the option `cdhome`, which was not available until
+version 8.2 with patch 3780:
 
 [source,vimscript]
 ----
@@ -62,20 +62,36 @@ used, similarly, have a symbolic link to `~/vimrc` folder and have the
 == Windows
 
 The `&#x5F;vimrc` is a clone of the `.vimrc`; there is nothing in either that
-is incompatible with the latter operating system.  That is, everything
-should work in Windows and Linux and vice versa.
+is incompatible with the other operating system.  That is, everything
+should work in Windows and Linux (or WSL) and vice versa.
 
-There are some conditional sections to handle the differences, though those
+There are some _conditional_ sections to handle the differences, though those
 are mostly around display.
 
 == GUI
 
 The GUI is applicable to both operating systems.  From 2023-07-15,
-I separated most of the GUI-specific things into a `.gvimrc` /
+I separated _most_ of the GUI-specific things into a `.gvimrc` /
 `&#x5F;gvimrc` - this was driven by making a specific Toolbar for gvim.
 It is also the recommended way of keeping GUI-related settings distinct.
 This has grown a bit but it is still nowhere near as large as the `.vimrc`,
 which makes sense.
+
+One consideration around this is the order of loading of plugins.  Reviewing
+output of `--startuptime`, the following is seen, in this order:
+
+* The `ftdetect` folder-containing plugins (e.g., in vim-asciidoctor)
+sourced by _vimrc are loaded first along with other `vim90` folder .vim
+files (e.g., syntax.vim)
+* The `$HOME\_vimrc` is next, which is followed by its packadd `\opt`
+folder plugins.
+* Other `vim90` folder plugins are next (e.g., netrwPlugin.vim).
+* The `$HOME\_gvimrc` is almost last, sourced just before the GUI starts.
+
+What this means is that setting things in the `$HOME\_gvimrc` needs to
+be considered in the context of the things that could impact that which
+have already been loaded.  For example, a lot of mappings have been made
+by the time the `_gvimrc` is sourced.
 
 == Sections
 

@@ -42,6 +42,7 @@ if !has("gui_running")
   &t_EI = "\<esc>[1 q"   # blinking block
   &t_SI = "\<esc>[5 q"   # blinking I-beam in insert mode
   &t_SR = "\<esc>[3 q"   # blinking _underline in replace mode
+  colorscheme industry   # better colorscheme for Console Vim
 endif
 # # set lines=28  # Commented out (for PowerShell) - it makes things go awry
 # # There is no clean way of determining whether you are in PowerShell or
@@ -715,8 +716,8 @@ augroup END
 # "Y" 	https://github.com/kennypete/vim-sents
 # "Y" 	https://github.com/kennypete/vim-characterize (tpope fork +)
 # "Y" 	https://github.com/kennypete/vim-tene
-# vim-ai - only use where vim9 and Python3 alignment
-if v:version >= 900
+# vim-ai - only use where vim9 and Python3 align
+if v:versionlong >= 9001499
   g:Fpackadd('vim-ai')
 endif
 g:asciidoctor_allow_uri_read = " -a allow-uri-read"
