@@ -57,18 +57,12 @@ if has("toolbar")
 endif
 #}}}
 # 02 Highlights {{{
-# Screen column indicator
-highlight ColorColumn guibg=LightGrey
-# Just the current (cursor's) line number indicator - makes it more distinct
-highlight CursorLineNr guifg=DarkGrey gui=bold
-# The colour of the line numbers
-highlight LineNr guifg=Grey
-# The showmode message's colour (e.g., -- INSERT --)
-highlight ModeMsg guifg=DarkGrey gui=bold
-# Colour of 'showbreak' and other non-text characters
-highlight NonText guifg=LightGrey guibg=White
-# Colour of the 'list' characters like Tab
-highlight SpecialKey guibg=LightGrey guifg=White
+# Make sure that the default g:colors_name exists and is default (which it
+# should be anyhow since that is the default rather than empty!)  NB: Actually
+# calling colorscheme default does weird things here - AVOID doing that!
+if !exists("g:colors_name")
+  g:colors_name = 'default'
+endif
 # }}}
 # 03 Settings (global) {{{
 #   columns  Set columns to 80 + 1 (colorcolumn) + 3 (number) + 1 (foldcolumn)
@@ -78,9 +72,10 @@ set columns=85
 # font can be set in WSL Properties dialog (and obviously the font installed).
 # https://www.nerdfonts.com/font-downloads
 if has('gui_gtk3')
-  set guifont=FiraCode\ Nerd\ Font\ Mono\ Regular\ 12
+  set guifont=FiraCode\ Nerd\ Font\ Mono\ Regular\ 12,FiraCode\ NFM\ 12
 elseif has('gui_win32')
-  set guifont=FiraCode_NFM:h12
+  set guifont=FiraCode_Nerd_Font_Mono:h12,FiraCode_NFM:h12
+  #set guifont=FiraCode_Nerd_Font_Mono:h12
 endif
 #   guifontset=  Not used as I am happy with just FiraCode_NFM
 #   guifontwide=  Not used, but maybe one day investigate using
@@ -125,6 +120,7 @@ set titlestring=%{expand(\"%:p\")}\ %{&modified&&&buftype!='terminal'?'\ +':''}%
 # 04 Commands (none yet for gvim specifically) {{{
 # }}}
 # 05 Functions {{{
+# 05.10 Font Size {{{2
 #
 #     Δ       FFFF   OOO   NNN  TTT     SSS III ZZZZ  EEEE
 #    Δ Δ      F     O   O  N  N  T     S     I    ZZ  E
@@ -133,11 +129,12 @@ set titlestring=%{expand(\"%:p\")}\ %{&modified&&&buftype!='terminal'?'\ +':''}%
 # ΔΔΔΔΔΔΔΔΔ   F      OOO   N  N  T     SSS  III ZZZZ  EEEE
 #
 # Change font size
-# including functions: broadly based on eggbean/resize-font.gvim
+# including functions: broadly based on eggbean/resize-font.gvim, but taken
+# further, e.g., handling multiple fonts listed in &guifont, for example.
 #
 # NB: Only enable when > v8.2 with patch 4807.  Don't bother with change font
 #     size when using other versions because that's so rare for me it's not
-#     worth it, and this really is non-essential.
+#     worth it, and this really is only very nice to have (and is used).
 if v:versionlong >= 8024807
   # initialisation of variables
   var gf_size_whole: number
@@ -146,9 +143,7 @@ if v:versionlong >= 8024807
   var gf_bold: string
   var gf_cansi: string
   var gf_qdraft: string
-  # This could be made only for Windows since this is the _gvimrc
-  # but as they are identical (i.e., .gvimrc and _gvimrc) I'm running
-  # with simplicity notwithstanding this is not optimally efficient.
+  # Replace all font size digit(s).  For gtk, all with either ',' or $ following
   if has('gui_gtk')
     autocmd GUIEnter * g:gf_size_orig = matchstr(&guifont, '\( \)\@<=\d\+$')
     def g:FontSizePlus(): void
@@ -156,7 +151,7 @@ if v:versionlong >= 8024807
       if gf_size_whole < 28
         gf_size_whole += 1
         gf_new_font_size = ' ' .. gf_size_whole
-        &guifont = substitute(&guifont, ' \d\+$', gf_new_font_size, '')
+        &guifont = substitute(&guifont, ' \d\+\ze\($\|,\)', gf_new_font_size, 'g')
       endif
     enddef
     def g:FontSizeMinus(): void
@@ -164,47 +159,76 @@ if v:versionlong >= 8024807
       if gf_size_whole > 1
         gf_size_whole -= 1
         gf_new_font_size = ' ' .. gf_size_whole
-        &guifont = substitute(&guifont, ' \d\+$', gf_new_font_size, '')
+        &guifont = substitute(&guifont, ' \d\+\ze\($\|,\)', gf_new_font_size, 'g')
       endif
     enddef
     def g:FontSizeOriginal(): void
-      &guifont = substitute(&guifont, ' \d\+$', ' ' .. g:gf_size_orig, '')
+      &guifont = substitute(&guifont, ' \d\+\ze\($\|,\)', gf_new_font_size, 'g')
     enddef
   elseif has('gui_win32')
-    autocmd GUIEnter * g:gf_size_orig = matchstr(&guifont, '\(:h\)\@<=\d\+\(:W\d\+\)\?\(:b\)\?\(:cANSI\)\?\(:qDRAFT\)\?$')
+    # Replace all font size digit(s).  For win32, all instances of ':h' preceding
+    autocmd GUIEnter * g:gf_size_orig = matchstr(&guifont, '\(:h\)\@<=\d\+\(:W\d\+\)\?\(:b\)\?\(:cANSI\)\?\(:qDRAFT\)\?')
     def g:FontSizePlus(): void
-      gf_size_whole = str2nr(matchstr(&guifont, '\(:h\)\@<=\d\+\(:W\d\+\)\?\(:b\)\?\(:cANSI\)\?\(:qDRAFT\)\?$'))
-      gf_weight = matchstr(&guifont, '\(:W\d\+\)\?$')
-      gf_bold = matchstr(&guifont, '\(:b\)\?$')
-      gf_cansi = matchstr(&guifont, '\(:cANSI\)\?$')
-      gf_qdraft = matchstr(&guifont, '\(:qDRAFT\)\?$')
+      gf_size_whole = str2nr(matchstr(&guifont, '\(:h\)\@<=\d\+\(:W\d\+\)\?\(:b\)\?\(:cANSI\)\?\(:qDRAFT\)\?'))
+      gf_weight = matchstr(&guifont, '\(:W\d\+\)\?')
+      gf_bold = matchstr(&guifont, '\(:b\)\?')
+      gf_cansi = matchstr(&guifont, '\(:cANSI\)\?')
+      gf_qdraft = matchstr(&guifont, '\(:qDRAFT\)\?')
       if gf_size_whole < 28
         gf_size_whole += 1
         gf_new_font_size = ':h' .. gf_size_whole
-        &guifont = substitute(&guifont, '\(:h\d\+\)\(:W\d\+\)\?\(:b\)\?\(:cANSI\)\?\(:qDRAFT\)\?$', gf_new_font_size .. gf_weight .. gf_bold .. gf_cansi .. gf_qdraft, '')
+        &guifont = substitute(&guifont, '\(:h\d\+\)\(:W\d\+\)\?\(:b\)\?\(:cANSI\)\?\(:qDRAFT\)\?', gf_new_font_size .. gf_weight .. gf_bold .. gf_cansi .. gf_qdraft, 'g')
       endif
     enddef
     def g:FontSizeMinus(): void
-      gf_size_whole = str2nr(matchstr(&guifont, '\(:h\)\@<=\d\+\(:W\d\+\)\?\(:b\)\?\(:cANSI\)\?\(:qDRAFT\)\?$'))
-      gf_weight = matchstr(&guifont, '\(:W\d\+\)\?$')
-      gf_bold = matchstr(&guifont, '\(:b\)\?$')
-      gf_cansi = matchstr(&guifont, '\(:cANSI\)\?$')
-      gf_qdraft = matchstr(&guifont, '\(:qDRAFT\)\?$')
+      gf_size_whole = str2nr(matchstr(&guifont, '\(:h\)\@<=\d\+\(:W\d\+\)\?\(:b\)\?\(:cANSI\)\?\(:qDRAFT\)\?'))
+      gf_weight = matchstr(&guifont, '\(:W\d\+\)\?')
+      gf_bold = matchstr(&guifont, '\(:b\)\?')
+      gf_cansi = matchstr(&guifont, '\(:cANSI\)\?')
+      gf_qdraft = matchstr(&guifont, '\(:qDRAFT\)\?')
       if gf_size_whole > 1
         gf_size_whole -= 1
         gf_new_font_size = ':h' .. gf_size_whole
-        &guifont = substitute(&guifont, '\(:h\d\+\)\(:W\d\+\)\?\(:b\)\?\(:cANSI\)\?\(:qDRAFT\)\?$', gf_new_font_size .. gf_weight .. gf_bold .. gf_cansi .. gf_qdraft, '')
+        &guifont = substitute(&guifont, '\(:h\d\+\)\(:W\d\+\)\?\(:b\)\?\(:cANSI\)\?\(:qDRAFT\)\?', gf_new_font_size .. gf_weight .. gf_bold .. gf_cansi .. gf_qdraft, 'g')
       endif
     enddef
     def g:FontSizeOriginal(): void
-      gf_weight = matchstr(&guifont, '\(:W\d\+\)\?$')
-      gf_bold = matchstr(&guifont, '\(:b\)\?$')
-      gf_cansi = matchstr(&guifont, '\(:cANSI\)\?$')
-      gf_qdraft = matchstr(&guifont, '\(:qDRAFT\)\?$')
-      &guifont = substitute(&guifont, '\(:h\d\+\)\(:W\d\+\)\?\(:b\)\?\(:cANSI\)\?\(:qDRAFT\)\?$', ':h' .. g:gf_size_orig .. gf_weight .. gf_bold .. gf_cansi .. gf_qdraft, '')
+      gf_weight = matchstr(&guifont, '\(:W\d\+\)\?')
+      gf_bold = matchstr(&guifont, '\(:b\)\?')
+      gf_cansi = matchstr(&guifont, '\(:cANSI\)\?')
+      gf_qdraft = matchstr(&guifont, '\(:qDRAFT\)\?')
+      &guifont = substitute(&guifont, '\(:h\d\+\)\(:W\d\+\)\?\(:b\)\?\(:cANSI\)\?\(:qDRAFT\)\?', ':h' .. g:gf_size_orig .. gf_weight .. gf_bold .. gf_cansi .. gf_qdraft, 'g')
     enddef
   endif
 endif
+# }}}
+# 05.20 Colorscheme overrides {{{2
+def g:ColoursGUIreset(): void
+  # default colorscheme overrides (they persist until the colorscheme changes)
+  if g:colors_name == "default"
+    # line numbers
+    highlight LineNr guifg=Grey
+    # the line number of the active cursor
+    highlight CursorLineNr gui=bold guifg=DarkRed
+    # Screen column indicator
+    highlight ColorColumn guibg=LightGrey
+    # 'showmode' message's colour (e.g., -- INSERT --)
+    highlight ModeMsg guifg=DarkGrey
+    # 'showbreak' and other non-text characters
+    highlight NonText guifg=LightGrey
+    # 'list' characters like Tab
+    highlight SpecialKey guifg=LightGrey
+    # Inactive statusline less prominent
+    highlight StatusLineNC guifg=Black guibg=Grey gui=NONE
+    #if has('Win32') # Windows Git Bash, Native Linux
+    #  highlight Visual guibg=Grey
+    #  highlight DiffAdd ctermbg=Blue
+    #endif
+  else
+    # Do nothing special - only use default!
+  endif
+enddef
+# }}}
 # }}}
 # 06 Mappings {{{
 # Mapping to toggle renderer in Windows: needs Win32 and directx
@@ -242,7 +266,11 @@ if has('gui_gtk') || has('gui_win32') # only gtk and win32 have the functions
   endif
 endif
 #}}}
-# 07 Autocommands (none yet for gvim specifically) {{{
+# 07 Autocommands {{{
+augroup gvimrc-ColorScheme
+  au!
+  au ColorScheme * call g:ColoursGUIreset()
+augroup END
 # }}}
 # 08 Plugins (none specifically for gvim currently) {{{
 # Using the native Vim plugin handling. :h packadd

@@ -12,10 +12,6 @@
 set t_u7=
 if has("gui_running")
 " MOVED TO _gvimrc
-"  " allow lines to be as long as you like - easier sometimes to read
-"  set nowrap
-"  " don't hide the mouse cursor when something is typed - low value
-"  set nomousehide
 "  " set guifont=DejaVu_Sans_Mono_for_Powerline:h12
 "  " Set gvim-specific font to ensure display of special characters
 "  " however, for WSL the font can be set in the
@@ -78,58 +74,24 @@ endif
 "let &verbosefile=g:verbose_log_filename
 " }}}
 " 02 Highlights {{{
-" There are not a lot of .vimrc highlights as I accept defaults for many
-" things and/or use highlights in plugins. The ones here are for the most
-" essential things like the line numbers and the current line number,
-" non-printing wrap characters, and non-printing special characters, which are
-" highlighted so that they are more obvious when editing documents.
-" These are in an autocmd group too, so that they re-set if a colorscheme is
-" called, and early in the .vimrc to ensure it is called if a colorscheme is.
-" Optimising for Windows Vim (non-GUI - refer _gvimrc for GUI)
-highlight CursorLineNr ctermfg=White cterm=bold
-highlight LineNr ctermfg=DarkGrey "| Line numbers colours
-highlight NonText ctermfg=DarkGrey "| For the wrap chrs
-highlight SpecialKey ctermfg=Grey "| Tab, etc
-highlight ModeMsg ctermfg=LightGrey cterm=bold "| Modeline
-highlight ColorColumn ctermbg=DarkBlue "| Column at 80 etc
-highlight CursorLine ctermbg=DarkBlue "| Line the cursor's on
-if v:version >= 704 || (v:version == 704 && has('patch2015'))
-  augroup MyColours
-    autocmd!
-    autocmd ColorScheme * if v:version >= 704 || (v:version == 704
-          \ && has('patch2015')) |
-          \ ColorSchemeChanged() | endif
-  augroup END
-endif
-" Function to handle the ColorSchemeChange event - this sets the highlights
-" above and in the .gvimrc / _gvimrc back to what I want them to be again,
-" regardless of what colorscheme is chosen.
-function! ColorSchemeChanged()
-  if has("gui_running")
-    highlight ColorColumn guibg=LightGrey
-    highlight CursorLineNr guifg=DarkGrey gui=bold
-    highlight LineNr guifg=Grey
-    highlight ModeMsg guifg=DarkGrey gui=bold
-    highlight NonText guifg=LightGrey guibg=White
-    highlight SpecialKey guibg=LightGrey guifg=White
-  elseif !has("gui_running")
-    highlight ColorColumn ctermbg=DarkBlue
-    highlight CursorLineNr ctermfg=White cterm=bold
-    highlight LineNr ctermfg=DarkGrey
-    highlight ModeMsg ctermfg=LightGrey cterm=bold
-    highlight NonText ctermfg=DarkGrey
-    highlight SpecialKey ctermfg=Grey
-  elseif has("unix") && !has("gui_running")
-    " nothing for now - I think these were for Debian 11 native, GUI perhaps?
-    " highlight CursorLineNr guifg=DarkGrey cterm=bold ctermfg=15
-    " highlight LineNr guifg=Grey ctermfg=8
-    " highlight NonText ctermfg=238 guifg=#d0d0d0
-    " highlight SpecialKey ctermfg=Grey guibg=Grey guifg=White
-    " highlight ModeMsg ctermfg=252 cterm=bold gui=bold guifg=Grey
+" There are not a lot of .vimrc highlights because I accept defaults for many
+" things.  I used to set these up here, but now use a function and a
+" combination of autocommand groups and a one-off setup at the end of either
+" this vimrc or gvimrc (for the GUI).
+" ----------------------------------------------------------------------------
+" NB: This is set for my setup in Windows Vim (non-GUI).  It needs to be
+"     optimised for Debian 12, WSL, and Vim from PowerShell?
+" First, set the colorscheme to default, which I toyed with changing, but
+" settled with default EVERYWHERE, so this is kind of redundant...
+if !has("gui_running")
+  if has("unix")
+    colorscheme default
   else
-    " Default behavior otherwise
+    colorscheme default
   endif
-endfunction
+else
+  " Set things in _gvimrc since this is specific to the GUI
+endif
 " }}}
 " 03 Settings (global) {{{
 " Vim can be run with "-u NONE" or "-C" to not load a vimrc.
@@ -196,7 +158,7 @@ endif
 if v:version > 800
   set pumwidth=18 " ... and increase the character width for popup menu items
 endif
-" set renderoptions is above in Windows/GUI section
+" set renderoptions is in _gvimrc8
 set scrolloff=99 " keep the cursor in the middle of the window
 if v:version > 600
   set sessionoptions=buffers,curdir,folds,help,options,tabpages,winpos,winsize
@@ -359,6 +321,50 @@ endif
 " NB : the recommendation to add 'abort' after each so that
 " if something goes wrong Vim will not try to run the whole function, as
 " recommended by the Reddit vimrctips.
+"
+" ColoursConsoleReset
+" NB:
+" 1. Console only - for GUI refer gvimrc
+" 2. Presumes using defaults for terminal (e.g., PowerShell = Campbell)
+" The colours here are for just a few distinct key highlights like the line
+" numbers and the current line number, non-printing wrap characters, and
+" non-printing special characters, which are highlighted so that they are
+" more obvious when editing documents.  These are in an autocmd group too,
+" so that they re-set if a colorscheme is called, and early in the .vimrc
+" to ensure it is called if a colorscheme is.  It is kept intentionally
+" low impact (using default colorscheme only, and tweaking from there in all
+" variants) PLUS considering vim-tene, which re-uses some of the in-built
+" highlight groups, so some need slight tweaking.
+function g:ColoursConsoleReset() abort
+  " default colorscheme overrides (they persist until the colorscheme changes)
+  if !has("gui_running")
+    if g:colors_name == "default"
+      " line numbers
+      highlight LineNr ctermfg=DarkGrey
+      " the line number of the active cursor
+      highlight CursorLineNr cterm=bold ctermfg=Yellow
+      " 'showmode' message's colour (e.g., -- INSERT --)
+      highlight ModeMsg ctermfg=LightGrey
+      " 'showbreak' and other non-text characters
+      highlight NonText ctermfg=DarkGrey
+      " 'list' characters like Tab
+      highlight SpecialKey ctermfg=Grey
+      " The inactive statusline, etc.
+      highlight ColorColumn ctermbg=DarkGrey
+      if has('Win32') " Windows: Powershell, Console Vim
+        highlight StatusLine ctermbg=White
+        highlight StatusLineNC ctermbg=DarkGrey
+      else " Windows Git Bash, Native Linux
+        highlight Visual cterm=reverse ctermbg=Black
+        highlight DiffAdd ctermbg=Blue
+      endif
+    else
+      " Do nothing special - only use default!
+    endif
+  else " GUI ...
+    " Handled in _gvimrc
+  endif
+endfunction
 "
 " -- FUNCTION CustomCursorBLOCK — Cursor shape setting (XFCE only)
 function! CustomCursorBLOCK() abort
@@ -528,6 +534,10 @@ silent execute 'nnoremap <C-S> :%sm_x_y_gc<C-Left><Right><Right>' | " CTRL-S
 "nnoremap <silent> <Tab> :call NextBuffer(1)<CR>
 "nnoremap <silent> <S-Tab> :call NextBuffer(-1)<CR>
 
+" c[nore]map - Command-line mode only mappings {{{2
+cnoremap <C-L> :exe "redrawstatus"<CR>
+" 2}}}
+
 " xmap — Visual mode mappings
 silent execute 'xnoremap <C-S> :sm_x_y_gc<S-Left>' | " CTRL-S 'template' :%sm
 xnoremap <silent> <leader>l :call ToggleLineNumber()<CR>gv
@@ -637,20 +647,14 @@ augroup skeletons
   endif
 augroup END " 2}}}
 " colorschemes {{{2
-" if v:version > 899
-"   augroup colours " This was added only to test vim-tene
-"     autocmd!
-"     autocmd ColorScheme gruvbox {
-"         g:tene_hi = exists("g:tene_hi") ? g:tene_hi : {}
-"         g:tene_hi['o'] = 'DiffDelete'
-"         g:tene_hi['i'] = 'IncSearch'
-"         g:tene_hi['r'] = 'DiffText'
-"         g:tene_hi['v'] = 'DiffChange'
-"         hi tene_x gui=italic guifg=#dadada guibg=#d5c4a1
-"         g:tene_hi['x'] = 'tene_x'
-"       }
-"   augroup END
-" endif " 2}}}
+if v:version >= 704 || (v:version == 704 && has('patch2015'))
+  augroup vimrc8-ColorScheme
+    autocmd!
+    autocmd ColorScheme * if v:version >= 704 || (v:version == 704
+          \ && has('patch2015')) |
+          \ call g:ColoursConsoleReset() | endif
+  augroup END
+endif " 2}}}
 " cursorline always on in Normal mode and Insert modes {{{2
 augroup cursorline
   autocmd!
@@ -748,7 +752,7 @@ filetype plugin indent on " Refer :filetype-overview  Current status :filetype
 " wanted for whatever reason, the setup as at 6/7/2022 is at:
 " https://github.com/kennypete/.vimrc/blob/86db077d1039a4cd43b5d67f050bca1f4f2e8a91/_vimrc
 " }}}
-" 95 Development {{{
+" 98 Development {{{
 " --------------------------
 " COMMAND LINE NORMAL 'MODE'
 " --------------------------
@@ -884,4 +888,4 @@ command! -nargs=1 -complete=command Gb execute ":b" .. g:mbuf[<q-args>]
 "augroup END
 
 " }}}
-" vim: textwidth=79 foldmethod=marker filetype=vim expandtab
+" vim: cc=+1 et fdm=marker ft=vim sta sts=0 sw=2 ts=8 tw=79

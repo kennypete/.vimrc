@@ -42,7 +42,6 @@ if !has("gui_running")
   &t_EI = "\<esc>[1 q"   # blinking block
   &t_SI = "\<esc>[5 q"   # blinking I-beam in insert mode
   &t_SR = "\<esc>[3 q"   # blinking _underline in replace mode
-  colorscheme industry   # better colorscheme for Console Vim
 endif
 # # set lines=28  # Commented out (for PowerShell) - it makes things go awry
 # # There is no clean way of determining whether you are in PowerShell or
@@ -73,61 +72,23 @@ endif
 # }}}
 # 02 Highlights {{{
 # There are not a lot of .vimrc highlights because I accept defaults for many
-# things.  The ones here are for just a few key highlights like the line
-# numbers and the current line number, non-printing wrap characters, and
-# non-printing special characters, which are highlighted so that they are
-# more obvious when editing documents.  These are in an autocmd group too,
-# so that they re-set if a colorscheme is called, and early in the .vimrc
-# to ensure it is called if a colorscheme is.
+# things.  I used to set these up here, but now use a function and a
+# combination of autocommand groups and a one-off setup at the end of either
+# this vimrc or gvimrc (for the GUI).
 # ----------------------------------------------------------------------------
 # NB: This is set for my setup in Windows Vim (non-GUI).  It needs to be
 #     optimised for Debian 12, WSL, and Vim from PowerShell?
-# Screen column indicator
-highlight ColorColumn ctermbg=DarkBlue
-# Just the current (cursor's) line number indicator - makes it more distinct
-highlight CursorLineNr ctermfg=White cterm=bold
-# The colour of the line numbers
-highlight LineNr ctermfg=DarkGrey
-# The showmode message's colour (e.g., -- INSERT --)
-highlight ModeMsg ctermfg=LightGrey cterm=bold
-# Colour of 'showbreak' and other non-text characters
-highlight NonText ctermfg=DarkGrey
-# Colour of the 'list' characters like Tab
-highlight SpecialKey ctermfg=Grey
-# Define the autocmd for when a colorscheme is changed
-augroup MyColours
-  autocmd!
-  autocmd ColorScheme * ColorSchemeChanged()
-augroup END
-# Function to handle the ColorSchemeChange event - this sets the highlights
-# above and in the .gvimrc / _gvimrc back to what I want them to be again,
-# regardless of what colorscheme is chosen.
-def ColorSchemeChanged()
-  if has("gui_running")
-    highlight ColorColumn guibg=LightGrey
-    highlight CursorLineNr guifg=DarkGrey gui=bold
-    highlight LineNr guifg=Grey
-    highlight ModeMsg guifg=DarkGrey gui=bold
-    highlight NonText guifg=LightGrey guibg=White
-    highlight SpecialKey guibg=LightGrey guifg=White
-  elseif !has("gui_running")
-    highlight ColorColumn ctermbg=DarkBlue
-    highlight CursorLineNr ctermfg=White cterm=bold
-    highlight LineNr ctermfg=DarkGrey
-    highlight ModeMsg ctermfg=LightGrey cterm=bold
-    highlight NonText ctermfg=DarkGrey
-    highlight SpecialKey ctermfg=Grey
-  elseif has("unix") && !has("gui_running")
-    # nothing for now - I think these were for Debian 11 native, GUI perhaps?
-    # highlight CursorLineNr guifg=DarkGrey cterm=bold ctermfg=15
-    # highlight LineNr guifg=Grey ctermfg=8
-    # highlight NonText ctermfg=238 guifg=#d0d0d0
-    # highlight SpecialKey ctermfg=Grey guibg=Grey guifg=White
-    # highlight ModeMsg ctermfg=252 cterm=bold gui=bold guifg=Grey
+# First, set the colorscheme to default, which I toyed with changing, but
+# settled with default EVERYWHERE, so this is kind of redundant...
+if !has("gui_running")
+  if has("unix")
+    colorscheme default
   else
-    # Default behavior otherwise
+    colorscheme default
   endif
-enddef
+else
+  # Set things in _gvimrc since this is specific to the GUI
+endif
 # }}}
 # 03 Settings (global) {{{
 # Vim can be run with "-u NONE" if you do not want to load a vimrc.
@@ -250,7 +211,7 @@ silent execute has('mouse') ? 'set nomousehide' : ''
 set numberwidth=3
 # set operatorfunc  This defined in xnoremap <F8>, below
 #   printfont  This prints optimally on my HP LaserJet Pro M148
-set printfont=FiraCode_NFM:h9
+set printfont=FiraCode_Nerd_Font_Mono:h9
 #   printheader  My custom header, incl. lines and page number
 set printheader=%<%F %h %m (%L lines)%=Page %N
 #   printoptions  Prints line numbers
@@ -263,10 +224,11 @@ set pumwidth=18
 #   report  Report the # of lines changed _always_, not only when >2 (default)
 set report=0
 # set ruler, rulerformat = n/a: I use a statusline, vim-tene - refer :h ruler
-#   scrolloff  Keep a few lines above cursor; 99 has it in the window's middle
-set scrolloff=2
+#   scrolloff  Keep 0 lines above/below cursor; 999 stays in window's middle
+set scrolloff=0
 #   sessionoptions  Self-evident things that get saved with :mksession
 set sessionoptions=buffers,curdir,globals,folds,help,options,tabpages,winsize
+# set shell=pwsh
 # set shell  Keep defaults.  If in Windows use PowerShell if wanted _in cmd_
 #   shiftwidth  Number of spaces for each autoindent/tab press
 set shiftwidth=2
@@ -421,7 +383,80 @@ command! -nargs=1 -complete=command Gb execute ':B ' .. g:mbuf[<q-args>]
 # 2}}}
 # }}}
 # 05 Functions {{{
-# Cycle virtualedit local setting {{{2
+# 05.10 ColoursConsoleReset {{{2
+# NB:
+# 1. Console only - for GUI refer gvimrc
+# 2. Presumes using defaults for terminal (e.g., PowerShell = Campbell)
+# The colours here are for just a few distinct key highlights like the line
+# numbers and the current line number, non-printing wrap characters, and
+# non-printing special characters, which are highlighted so that they are
+# more obvious when editing documents.  These are in an autocmd group too,
+# so that they re-set if a colorscheme is called, and early in the .vimrc
+# to ensure it is called if a colorscheme is.  It is kept intentionally
+# low impact (using default colorscheme only, and tweaking from there in all
+# variants) PLUS considering vim-tene, which re-uses some of the in-built
+# highlight groups, so some need slight tweaking.
+def g:ColoursConsoleReset(): void
+  # default colorscheme overrides (they persist until the colorscheme changes)
+  if !has("gui_running")
+    if g:colors_name == "default"
+      # line numbers
+      highlight LineNr ctermfg=DarkGrey
+      # the line number of the active cursor
+      highlight CursorLineNr cterm=bold ctermfg=Yellow
+      # 'showmode' message's colour (e.g., -- INSERT --)
+      highlight ModeMsg ctermfg=LightGrey
+      # 'showbreak' and other non-text characters
+      highlight NonText ctermfg=DarkGrey
+      # 'list' characters like Tab
+      highlight SpecialKey ctermfg=Grey
+      # The inactive statusline, etc.
+      highlight ColorColumn ctermbg=DarkGrey
+      if has('Win32') # Windows: Powershell, Console Vim
+        highlight StatusLine ctermbg=White
+        highlight StatusLineNC ctermbg=DarkGrey
+      else # Windows Git Bash, Native Linux
+        highlight Visual cterm=reverse ctermbg=Black
+        highlight DiffAdd ctermbg=Blue
+      endif
+    else
+      # Do nothing special - only use default!
+    endif
+  else # GUI ...
+    # Handled in _gvimrc
+  endif
+enddef
+# revise # Function to handle the ColorSchemeChange event - this sets the highlights
+# revise # above and in the .gvimrc / _gvimrc back to what I want them to be again,
+# revise # regardless of what colorscheme is chosen.
+# revise def ColorSchemeChanged()
+# revise   if has("gui_running")
+# revise     highlight ColorColumn guibg=LightGrey
+# revise     highlight CursorLineNr guifg=DarkGrey gui=bold
+# revise     highlight LineNr guifg=Grey
+# revise     highlight ModeMsg guifg=DarkGrey gui=bold
+# revise     highlight NonText guifg=LightGrey guibg=White
+# revise     highlight SpecialKey guibg=LightGrey guifg=White
+# revise   elseif !has("gui_running")
+# revise     highlight ColorColumn ctermbg=DarkBlue
+# revise     highlight CursorLineNr ctermfg=White cterm=bold
+# revise     highlight LineNr ctermfg=DarkGrey
+# revise     highlight ModeMsg ctermfg=LightGrey cterm=bold
+# revise     highlight NonText ctermfg=DarkGrey
+# revise     highlight SpecialKey ctermfg=Grey
+# revise   elseif has("unix") && !has("gui_running")
+# revise     # nothing for now - I think these were for Debian 11 native, GUI perhaps?
+# revise     # highlight CursorLineNr guifg=DarkGrey cterm=bold ctermfg=15
+# revise     # highlight LineNr guifg=Grey ctermfg=8
+# revise     # highlight NonText ctermfg=238 guifg=#d0d0d0
+# revise     # highlight SpecialKey ctermfg=Grey guibg=Grey guifg=White
+# revise     # highlight ModeMsg ctermfg=252 cterm=bold gui=bold guifg=Grey
+# revise   else
+# revise     # Default behavior otherwise
+# revise   endif
+# revise enddef
+# }}}
+# 05.20 Cycle virtualedit local setting {{{2
 def g:FcycleVirtualEdit()
   if &virtualedit == "all"
     set virtualedit=block
@@ -437,7 +472,7 @@ def g:FcycleVirtualEdit()
   endif
 enddef
 # 2}}}
-# Generate Unicode Characters Table {{{2
+# 05.30 Generate Unicode Characters Table {{{2
 def g:FgenerateUnicode(first: number, last: number)
   var i = first
   while i <= last
@@ -450,7 +485,7 @@ def g:FgenerateUnicode(first: number, last: number)
   endwhile
 enddef
 # 2}}}
-# Go to buffer number in any tab {{{2
+# 05.40 Go to buffer number in any tab {{{2
 def g:GoToBufferInTab(b: number): void
   var c = tabpagenr()
   for t in range(tabpagenr('$'))
@@ -466,20 +501,20 @@ def g:GoToBufferInTab(b: number): void
   echo "Buffer not found in any window."
 enddef
 # 2}}}
-# Popup mode code {{{2
+# 05.50 Popup mode code {{{2
 # Makes a popup notification with the current mode and state - for debugging
 def g:Fpopupmode()
   popup_notification(mode(1) .. state(), {time: 555})
 enddef
 # 2}}}
-# Set numberwidth option by the number of lines in the buffer {{{2
+# 05.60 Set numberwidth option by the number of lines in the buffer {{{2
 def g:FsetNumberWidth()
   var num_lines = line('$')
   var new_width = len(num_lines) + 2
   execute 'set numberwidth=' .. new_width
 enddef
 # 2}}}
-# Toggle current window wrapping {{{2
+# 05.70 Toggle current window wrapping {{{2
 def g:FwindowWrapToggle()
   if &wrap == v:false
     set wrap
@@ -488,7 +523,7 @@ def g:FwindowWrapToggle()
   endif
 enddef
 # 2}}}
-# Toggle code commenting of selected or current line {{{2
+# 05.71 Toggle code commenting of selected or current line {{{2
 g:comment_map = {"python": '#', "sh": '#', "bat": 'REM', "vbs": "'",
 \ "omnimark": ";", "vim": '#'}
 def g:FtoggleComment()
@@ -511,7 +546,7 @@ def g:FtoggleComment()
   endif
 enddef
 # 2}}}
-# Toggle line numbers - literal > relative > none {{{2
+# 05.72 Toggle line numbers - literal > relative > none {{{2
 def g:FtoggleLineNumber()
   if !&number
     set number
@@ -524,7 +559,7 @@ def g:FtoggleLineNumber()
   endif
 enddef
 # 2}}}
-# Try and catch packadd! a plugin; echo a message if it fails {{{2
+# 05.80 Try and catch packadd! a plugin; echo a message if it fails {{{2
 def g:Fpackadd(aplugin: string): void
   try
     # This must use execute, not just packadd! because of passing the arg
@@ -534,7 +569,7 @@ def g:Fpackadd(aplugin: string): void
   endtry
 enddef
 # 2}}}
-# XFCE cursor shapes {{{2
+# 05.90 XFCE cursor shapes {{{2
 def g:FcustomCursorBLOCK()
   if isdirectory('~/.config/xfce4')
     if filewritable('~/.config/xfce4/terminal/terminalrc')
@@ -569,6 +604,15 @@ noremap <silent><Leader>c :call g:FtoggleComment()<CR>
 # vim9-popped - noremap <silent><Leader>b :CpopupBuffersMenu buffers<CR>
 # vim9-popped - noremap <silent><Leader>b :CpopupBuffersMenu buffers!<CR>
 # 2}}}
+# c[nore]map - Command-line mode only mappings {{{2
+cnoremap <C-L> :exe "redrawstatus"<CR>
+# 2}}}
+# i[nore]map — Insert mode only mappings {{{2
+# Bram recommended undo atom
+inoremap <C-U> <C-G>u<C-U>
+# Enter a 	 with <S-Tab>
+inoremap <S-Tab> <C-V><Tab>
+# 2}}}
 # n[nore]map — Normal mode only mappings {{{2
 # Make entering digraphs from Normal mode easier, using <C-k>
 nnoremap <C-K> a<C-K>
@@ -586,12 +630,6 @@ nnoremap <F12> :let &go = &go =~# 'm' ?
 # Other:
 # - Toggle 'rendereroptions' needs GUI, Win32/Win64, and DirectX so -> _gvimrc
 # - vim-popped plugin mapping, gA, is an omnibus ga/g8/etc. command
-# 2}}}
-# i[nore]map — Insert mode only mappings {{{2
-# Bram recommended undo atom
-inoremap <C-U> <C-G>u<C-U>
-# Enter a 	 with <S-Tab>
-inoremap <S-Tab> <C-V><Tab>
 # 2}}}
 # x[nore]map — Visual mode only mappings {{{2
 # Use <C-S> for a su "template", with very no magic and _ delimiters.
@@ -651,7 +689,7 @@ vnoremap <C-Up> gk
 # }}}
 # 07 Autocommands {{{
 # augroup MyColours is defined in 02 Highlights
-# Normal mode forced when moving to an unmodifiable buffer {{{2
+# 07.10 Normal mode forced when moving to an unmodifiable buffer {{{2
 #	https://github.com/vim/vim/issues/12072
 augroup forcenormal
   autocmd!
@@ -661,13 +699,13 @@ augroup forcenormal
         \ ? ':call feedkeys("\<C-L>")' : ''
 augroup END
 # 2}}}
-#       FsetNumberWidth() on entering a buffer {{{2
+# 07.20 FsetNumberWidth() on entering a buffer {{{2
 augroup triggersetnumberwidth
   autocmd!
   autocmd BufEnter * g:FsetNumberWidth()
 augroup END
 # 2}}}
-#       skeletons (templates) {{{2
+# 07.30 skeletons (templates) {{{2
 augroup skeletons
   autocmd!
   if filereadable(expand('~/vimfiles/skeleton.asciidoc'))
@@ -677,7 +715,7 @@ augroup skeletons
     autocmd BufNewFile *.txt 0r ~/vimfiles/skeleton.txt
   endif
 augroup END # 2}}}
-#       vimStartup {{{2
+# 07.40 vimStartup {{{2
 augroup vimStartup
   autocmd!
   # When editing a file, always jump to the last known cursor position.
@@ -690,7 +728,14 @@ augroup vimStartup
     \ | endif
 augroup END
 # 2}}}
-#       [Suppressed] colorschemes {{{2
+# 07.50 colorschemes {{{2
+# Define the autocmd for when a colorscheme is changed
+augroup vimrc-ColorScheme
+  autocmd!
+  autocmd ColorScheme * call g:ColoursConsoleReset()
+augroup END
+# 2}}}
+# 09.60 [Suppressed] colorschemes {{{2
 # (This was added only to test my vim-tene statusline plugin with gruvbox)
 #augroup colours
 #  autocmd!
@@ -709,17 +754,17 @@ augroup END
 # * Plugins path:  $HOME/.vim/pack/plugins  $HOME\vimfiles\pack\plugins
 # * To determine the remote git repository: git remote show origin
 # Plugins.  Currently in use indicated with "Y", orig unless "(specifics)":
-# "Y" 	https://github.com/madox2/vim-ai
+#     	https://github.com/madox2/vim-ai
 # "Y" 	https://github.com/kennypete/vim-asciidoctor (habamax fork +)
 #     	https://github.com/kennypete/vim-combining2
 # "Y" 	https://github.com/kennypete/vim-popped
 # "Y" 	https://github.com/kennypete/vim-sents
 # "Y" 	https://github.com/kennypete/vim-characterize (tpope fork +)
 # "Y" 	https://github.com/kennypete/vim-tene
-# vim-ai - only use where vim9 and Python3 align
-if v:versionlong >= 9001499
-  g:Fpackadd('vim-ai')
-endif
+# vim-ai - only use where vim9 and Python3 align - not using - commented out
+#if v:versionlong >= 9001499
+#  g:Fpackadd('vim-ai')
+#endif
 g:asciidoctor_allow_uri_read = " -a allow-uri-read"
 g:Fpackadd("vim-asciidoctor")
 g:Fpackadd("vim-characterize")
@@ -732,33 +777,37 @@ try
   # Create the g:tene_ga dictionary, if necessary
   g:tene_ga = exists("g:tene_ga") ? g:tene_ga : {}
   # Use pilcrow for line numbers ASCII and non-GUI (e.g., PowerShell)
-  if has("gui_running")
-    g:tene_ga["line()"] = ['¶', '']
-  else
-    g:tene_ga["line()"] = ['¶', '¶']
-  endif
-  if !has("gui_running")
+  # Commenting these out because FiraCode Mono should be everywhere
+  # if has("gui_running")
+  #   g:tene_ga["line()"] = ['¶', '']
+  # else
+  #   g:tene_ga["line()"] = ['¶', '¶']
+  # endif
+  # if !has("gui_running")
     # Use c with caron rather than Nerd font character when PowerShell, et al.
-    g:tene_ga["virtcol()"] = ['|', 'č']
-    g:tene_ga["mod"] = ['[+]', 'м']
-    g:tene_ga["noma"] = ['[-]', 'ӿ']
-    g:tene_ga["pvw"] = ['[Preview]', '[Preview]']
-    g:tene_ga["spell"] = ['S', 'ѕ']
-    g:tene_ga["key"] = ['E', 'ю']
-    g:tene_ga["paste"] = ['P', 'р']
-    g:tene_ga["recording"] = ['@', '@']
-    g:tene_ga["ro"] = ['[RO]', 'ф]']
-  endif
+    # Commenting these out because FiraCode Mono should be everywhere
+    # g:tene_ga["virtcol()"] = ['|', 'č']
+    # g:tene_ga["mod"] = ['[+]', 'м']
+    # g:tene_ga["noma"] = ['[-]', 'ӿ']
+    # g:tene_ga["pvw"] = ['[Preview]', '[Preview]']
+    # g:tene_ga["spell"] = ['S', 'ѕ']
+    # g:tene_ga["key"] = ['E', 'ю']
+    # g:tene_ga["paste"] = ['P', 'р']
+    # g:tene_ga["recording"] = ['@', '@']
+    # g:tene_ga["ro"] = ['[RO]', 'ф]']
+  # endif
   # Create the g:tene_hi dictionary, if necessary
   g:tene_hi = exists("g:tene_hi") ? g:tene_hi : {}
   # Override for Inactive statuslines
-  g:tene_hi['x'] = 'Conceal'
+  # g:tene_hi['x'] = 'Conceal'
   # Create the g:tene_modes dictionary, if necessary
   g:tene_modes = exists("g:tene_modes") ? g:tene_modes : {}
   # Override mode name for COMMAND-LINE
   g:tene_modes["c"] = "CMDLINE"
   # Always show the state(), not just the mode(1)
   g:tene_modestate = 1
+  # Always show the window number (after the buffer number)
+  g:tene_window_num = 1
   packadd! vim-tene
 # But, if vim-tene is unavailable or fails, create a basic statusline
 catch
@@ -776,6 +825,6 @@ filetype plugin indent on
 #}}}
 # 88 Deleted / moved temporally, and commented out {{{
 # }}}
-# 99 Development {{{
+# 98 Development {{{
 # }}}
-# vim: cc=+1 et fdm=marker ft=vim sta sts=0 sw=2 ts=8 tw=78
+# vim: cc=+1 et fdm=marker ft=vim sta sts=0 sw=2 ts=8 tw=79

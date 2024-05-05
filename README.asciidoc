@@ -31,7 +31,9 @@ _vimrc)
 
 [NOTE]
 To repeat, .vimrc and .gvimrc are **clones** of _vimrc and _gvimrc respectively.
-They will be used by Linux, WSL, etc.
+They may be used by Linux, WSL, etc., but it's just as straightforward to make
+a symbolic link to the `_` versions, which has the added advantage of showing
+up with a normal `ls` or `ls -l`.
 
 There are only a few things in the vim9script `_vimrc` that are not compatible
 with versions before the version 9.0.x.  However, it is possible
@@ -108,7 +110,7 @@ The `.vimrc` / `&#x5F;vimrc` is split into sections:
 08:: Plugins
 09:: Syntax + filetype
 88:: Deleted
-99:: Development
+98:: Development
 
 The `.gvimrc` / `&#x5F;gvimrc` are similarly structured.
 

@@ -51,18 +51,24 @@ endif
 
 "}}}
 " 02 Highlights {{{
-" Screen column indicator
-highlight ColorColumn guibg=LightGrey
-" Just the current (cursor's) line number indicator - makes it more distinct
-highlight CursorLineNr guifg=DarkGrey gui=bold
-" The colour of the line numbers
-highlight LineNr guifg=Grey
-" The showmode message's colour (e.g., -- INSERT --)
-highlight ModeMsg guifg=DarkGrey gui=bold
-" Colour of 'showbreak' and other non-text characters
-highlight NonText guifg=LightGrey guibg=White
-" Colour of the 'list' characters like Tab
-highlight SpecialKey guibg=LightGrey guifg=White
+" Make sure that the default g:colors_name exists and is default (which it
+" should be anyhow since that is the default rather than empty!)  NB: Actually
+" calling colorscheme default does weird things here - AVOID doing that!
+if !exists("g:colors_name")
+  let g:colors_name = 'default'
+endif
+"   " Screen column indicator
+"   highlight ColorColumn guibg=LightGrey
+"   " Just the current (cursor's) line number indicator - makes it more distinct
+"   highlight CursorLineNr guifg=DarkGrey gui=bold
+"   " The colour of the line numbers
+"   highlight LineNr guifg=Grey
+"   " The showmode message's colour (e.g., -- INSERT --)
+"   highlight ModeMsg guifg=DarkGrey gui=bold
+"   " Colour of 'showbreak' and other non-text characters
+"   highlight NonText guifg=LightGrey guibg=White
+"   " Colour of the 'list' characters like Tab
+"   highlight SpecialKey guibg=LightGrey guifg=White
 " }}}
 " 03 Settings (global) {{{
 "   columns  Set columns to 80 + 1 (colorcolumn) + 3 (number) + 1 (foldcolumn)
@@ -70,9 +76,10 @@ set columns=85
 " Set gvim-specific font to ensure display of special characters.  For WSL the
 " font can be set in WSL Properties dialog, but the font should be installed.
 if has('gui_gtk3')
-  set guifont=FiraCode\ Nerd\ Font\ Mono\ Regular\ 12
+  set guifont=FiraCode\ Nerd\ Font\ Mono\ Regular\ 12,FiraCode\ NFM\ 12
 elseif has('gui_win32')
-  set guifont=FiraCode_NFM:h12 " https://www.nerdfonts.com/font-downloads
+  set guifont=FiraCode_Nerd_Font_Mono:h12,FiraCode_NFM:h12
+  " https://www.nerdfonts.com/font-downloads
 endif
 set guioptions+=!abceghLmrtT " extend default guioptions to...
 set guioptions-=m " but then remove (use toolbar to toggle Menu)...
@@ -111,7 +118,29 @@ set titlestring=%{expand(\"%:p\")}\ %{&modified&&&buftype!='terminal'?'\ +':''}%
 " }}}
 " 04 Commands (none yet for gvim specifically) {{{
 " }}}
-" 05 Functions (none yet for gvim specifically) {{{
+" 05 Functions {{{
+" Colorscheme overrides
+function g:ColoursGUIreset()
+  " default colorscheme overrides (they persist until the colorscheme changes)
+  if g:colors_name == "default"
+    " line numbers
+    highlight LineNr guifg=Grey
+    " the line number of the active cursor
+    highlight CursorLineNr gui=bold guifg=DarkRed
+    " Screen column indicator
+    highlight ColorColumn guibg=LightGrey
+    " 'showmode' message's colour (e.g., -- INSERT --)
+    highlight ModeMsg guifg=DarkGrey
+    " 'showbreak' and other non-text characters
+    highlight NonText guifg=LightGrey
+    " 'list' characters like Tab
+    highlight SpecialKey guifg=LightGrey
+    " Inactive statusline less prominent
+    highlight StatusLineNC guifg=Black guibg=Grey gui=NONE
+  else
+    " Do nothing special - only use default!
+  endif
+endfunction
 " }}}
 " 06 Mappings {{{
 " Mapping to toggle renderer in Windows: needs Win32 and directx
@@ -119,7 +148,11 @@ if has ('Win32') && has('directx') && v:version > 704
   nnoremap <Leader>r <Cmd>execute "let &rop = (len(&rop)==0) ? 'type:directx,gamma:1.0,geom:0,renmode:5,taamode:1' : ''"<CR>
 endif
 "}}}
-" 07 Autocommands (none yet for gvim specifically) {{{
+" 07 Autocommands {{{
+augroup gvimrc-ColorScheme
+  au!
+  au ColorScheme * call g:ColoursGUIreset()
+augroup END
 " }}}
 " 08 Plugins (none yet for gvim specifically) {{{
 " }}}
