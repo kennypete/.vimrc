@@ -207,7 +207,7 @@ silent execute has('mouse') ? 'set mouse=ar' : ''
 silent execute has('mouse') ? 'set nomousefocus' : ''
 #   nomousehide  Don't hide mouse's cursor when something's typed (Silly, IMO)
 silent execute has('mouse') ? 'set nomousehide' : ''
-#   numberwidth  Default to 3, but use SetNumberWidth() function and au to alt
+#   numberwidth  Default to 3, but use g:VimrcSetNumberWidth() and au to alt
 set numberwidth=3
 # set operatorfunc  This defined in xnoremap <F8>, below
 #   printfont  This prints optimally on my HP LaserJet Pro M148
@@ -360,6 +360,12 @@ if !exists(":DiffOrig")
   \ | 0d_ | diffthis | wincmd p | diffthis
 endif
 # 2}}}
+# GenerateUnicode (Generate a Unicode table between two nnnn of U+nnnn) {{{2
+# Usage example:
+# :GenerateUnicode 161, 199
+command! -nargs=+ -complete=command GenerateUnicode
+      \ silent execute ':call g:VimrcGenerateUnicode(' .. <q-args> .. ')'
+# 2}}}
 # Redirr {{{2
 # Redirects outputs of a command to the @p register
 # This means, for example, :Redirr filter /S[duh]/ command
@@ -370,10 +376,18 @@ command! -nargs=+ -complete=command Redirr redir @p
       \ | silent execute <q-args>
       \ | redir END
 # 2}}}
+# Bod {num}? (Deletes all buffers bar %/{num}) {{{2
+command! -nargs=? -complete=command Bod
+      \ silent execute ':call g:VimrcBufferOnlyDelete(' .. <q-args> .. ')'
+# 2}}}
+# Bow {num}? (Wipes out all buffers bar %/{num}) {{{2
+command! -nargs=? -complete=command Bow
+      \ silent execute ':call g:VimrcBufferOnlyWipeout(' .. <q-args> .. ')'
+# 2}}}
 # B {{{2
 # Goes to the first instance of a window of {buffer number} in _any_ tab
 command! -nargs=1 -complete=command B
-      \ silent execute ':call g:GoToBufferInTab(' .. <f-args> .. ')'
+      \ silent execute ':call g:VimrcGoToBufferInTab(' .. <f-args> .. ')'
 # 2}}}
 # Mb and Gb {{{2
 # Mark a buffer and go to a buffer (uses :B command, above)
@@ -383,10 +397,38 @@ command! -nargs=1 -complete=command Gb execute ':B ' .. g:mbuf[<q-args>]
 # 2}}}
 # }}}
 # 05 Functions {{{
-# 05.10 ColoursConsoleReset {{{2
-# NB:
-# 1. Console only - for GUI refer gvimrc
-# 2. Presumes using defaults for terminal (e.g., PowerShell = Campbell)
+# g:VimrcBufferOnlyDelete (Deletes all bar % or {num} if specified) {{{2
+def! g:VimrcBufferOnlyDelete(keepbuffer: number = -1): void
+  var k = (keepbuffer == -1 ? bufnr() : keepbuffer)
+  var n = bufnr('$')
+  silent! execute 'b' k
+  for b in range(n, 1, -1)
+    if bufnr(b) != -1
+      if bufnr(b) != k
+        silent! execute 'bdelete!' b
+      endif
+    endif
+  endfor
+enddef
+# 2}}}
+# g:VimrcBufferOnlyWipeout (Wipes out all buffers bar % or {num}) {{{2
+def! g:VimrcBufferOnlyWipeout(keepbuffer: number = -1): void
+  var k = (keepbuffer == -1 ? bufnr() : keepbuffer)
+  var n = bufnr('$')
+  # Ensure the buffer is not hidden, otherwise the buffer list is buggered
+  silent! execute 'b' k
+  for b in range(n, 1, -1)
+    if bufnr(b) != -1
+      if bufnr(b) != k
+        silent! execute 'bwipeout!' b
+      endif
+    endif
+  endfor
+enddef
+# 2}}}
+# g:VimrcColoursConsoleReset (Resets colours when back to Default) {{{2
+# NB: 1. Console only (for GUI refer _gvimrc)
+#     2. Presumes using defaults for terminal (e.g., PowerShell = Campbell)
 # The colours here are for just a few distinct key highlights like the line
 # numbers and the current line number, non-printing wrap characters, and
 # non-printing special characters, which are highlighted so that they are
@@ -396,7 +438,7 @@ command! -nargs=1 -complete=command Gb execute ':B ' .. g:mbuf[<q-args>]
 # low impact (using default colorscheme only, and tweaking from there in all
 # variants) PLUS considering vim-tene, which re-uses some of the in-built
 # highlight groups, so some need slight tweaking.
-def g:ColoursConsoleReset(): void
+def g:VimrcColoursConsoleReset(): void
   # default colorscheme overrides (they persist until the colorscheme changes)
   if !has("gui_running")
     if g:colors_name == "default"
@@ -456,8 +498,8 @@ enddef
 # revise   endif
 # revise enddef
 # }}}
-# 05.20 Cycle virtualedit local setting {{{2
-def g:FcycleVirtualEdit()
+# g:VimrcCycleVirtualEdit (Cycle virtualedit local setting) {{{2
+def g:VimrcCycleVirtualEdit()
   if &virtualedit == "all"
     set virtualedit=block
   elseif &virtualedit == "block"
@@ -472,8 +514,9 @@ def g:FcycleVirtualEdit()
   endif
 enddef
 # 2}}}
-# 05.30 Generate Unicode Characters Table {{{2
-def g:FgenerateUnicode(first: number, last: number)
+# g:VimrcGenerateUnicode (Generate Unicode Characters Table) {{{2
+# NB: first and last are decimal values so, e.g, 162 is hexadecimal A2
+def g:VimrcGenerateUnicode(first: number, last: number): void
   var i = first
   while i <= last
     @c = printf('%04X ', i) .. '	'
@@ -485,8 +528,8 @@ def g:FgenerateUnicode(first: number, last: number)
   endwhile
 enddef
 # 2}}}
-# 05.40 Go to buffer number in any tab {{{2
-def g:GoToBufferInTab(b: number): void
+# g:VimrcGoToBufferInTab (Go to buffer number in _any_ tab) {{{2
+def g:VimrcGoToBufferInTab(b: number): void
   var c = tabpagenr()
   for t in range(tabpagenr('$'))
     execute ':norm ' .. (t + 1) .. 'gt'
@@ -501,32 +544,33 @@ def g:GoToBufferInTab(b: number): void
   echo "Buffer not found in any window."
 enddef
 # 2}}}
-# 05.50 Popup mode code {{{2
+# g:VimrcPackadd (try & catch packadd! a plugin; echo a msg if it fails) {{{2
+def g:VimrcPackAdd(aplugin: string): void
+  try
+    # This must use execute, not just packadd! because of passing the arg
+    execute "packadd! " .. aplugin
+  catch
+    echo "Could not load plugin " .. aplugin
+  endtry
+enddef
+# 2}}}
+# g:VimrcPopupModeCode (Generate a popup notification with the mode code) {{{2
 # Makes a popup notification with the current mode and state - for debugging
-def g:Fpopupmode()
+def g:VimrcPopupModeCode()
   popup_notification(mode(1) .. state(), {time: 555})
 enddef
 # 2}}}
-# 05.60 Set numberwidth option by the number of lines in the buffer {{{2
-def g:FsetNumberWidth()
+# g:VimrcSetNumberWidth (Set numberwidth in line with lines in the buffer {{{2
+def g:VimrcSetNumberWidth()
   var num_lines = line('$')
   var new_width = len(num_lines) + 2
   execute 'set numberwidth=' .. new_width
 enddef
 # 2}}}
-# 05.70 Toggle current window wrapping {{{2
-def g:FwindowWrapToggle()
-  if &wrap == v:false
-    set wrap
-  else
-    set nowrap
-  endif
-enddef
-# 2}}}
-# 05.71 Toggle code commenting of selected or current line {{{2
+# g:VimrcToggleComment (Toggle code commenting of selected/current line) {{{2
 g:comment_map = {"python": '#', "sh": '#', "bat": 'REM', "vbs": "'",
 \ "omnimark": ";", "vim": '#'}
-def g:FtoggleComment()
+def g:VimrcToggleComment()
   if has_key(g:comment_map, &filetype)
     var comment_leader = g:comment_map[&filetype]
     if getline('.') =~ "^\\s*" .. comment_leader .. " "
@@ -546,8 +590,8 @@ def g:FtoggleComment()
   endif
 enddef
 # 2}}}
-# 05.72 Toggle line numbers - literal > relative > none {{{2
-def g:FtoggleLineNumber()
+# g:VimrcToggleLineNumber (line numbers: literal > relative > none) {{{2
+def g:VimrcToggleLineNumber()
   if !&number
     set number
     set norelativenumber
@@ -559,25 +603,26 @@ def g:FtoggleLineNumber()
   endif
 enddef
 # 2}}}
-# 05.80 Try and catch packadd! a plugin; echo a message if it fails {{{2
-def g:Fpackadd(aplugin: string): void
-  try
-    # This must use execute, not just packadd! because of passing the arg
-    execute "packadd! " .. aplugin
-  catch
-    echo "Could not load plugin " .. aplugin
-  endtry
+# g:VimrcWindowWrapToggle (Toggle current window wrapping) {{{2
+def g:VimrcWindowWrapToggle()
+  if &wrap == v:false
+    set wrap
+  else
+    set nowrap
+  endif
 enddef
 # 2}}}
-# 05.90 XFCE cursor shapes {{{2
-def g:FcustomCursorBLOCK()
+# g:VimrcXfceCustomCursorBlock (XFCE cursor shapes BLOCK) {{{2
+def g:VimrcXfceCustomCursorBlock()
   if isdirectory('~/.config/xfce4')
     if filewritable('~/.config/xfce4/terminal/terminalrc')
         silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_IBEAM/TERMINAL_CURSOR_SHAPE_BLOCK/' ~/.config/xfce4/terminal/terminalrc"
     endif
   endif
 enddef
-def g:FcustomCursorIBEAM()
+# 2}}}
+# g:VimrcXfceCustomCursorIbeam (XFCE cursor shapes IBEAM) {{{2
+def g:VimrcXfceCustomCursorIbeam()
   if isdirectory('~/.config/xfce4')
     if filewritable('~/.config/xfce4/terminal/terminalrc')
       silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_BLOCK/TERMINAL_CURSOR_SHAPE_IBEAM/' ~/.config/xfce4/terminal/terminalrc"
@@ -595,12 +640,12 @@ nnoremap <Space> <Nop>
 g:mapleader = ' '
 # 2}}}
 #  [nore]map — Normal, Visual, Operator Pending modes mappings {{{2
-noremap <Leader>v :call g:FcycleVirtualEdit()<CR>
-noremap <Leader>w :call g:FwindowWrapToggle()<CR>
+noremap <Leader>v :call g:VimrcCycleVirtualEdit()<CR>
+noremap <Leader>w :call g:VimrcWindowWrapToggle()<CR>
 noremap <silent><Leader>i :exe "set colorcolumn=80 <bar> set textwidth=78"<CR>
 noremap <silent><Leader>I :exe "set colorcolumn=0 <bar> set textwidth=0"<CR>
-noremap <silent><Leader>l :call g:FtoggleLineNumber()<CR>
-noremap <silent><Leader>c :call g:FtoggleComment()<CR>
+noremap <silent><Leader>l :call g:VimrcToggleLineNumber()<CR>
+noremap <silent><Leader>c :call g:VimrcToggleComment()<CR>
 # vim9-popped - noremap <silent><Leader>b :CpopupBuffersMenu buffers<CR>
 # vim9-popped - noremap <silent><Leader>b :CpopupBuffersMenu buffers!<CR>
 # 2}}}
@@ -699,10 +744,10 @@ augroup forcenormal
         \ ? ':call feedkeys("\<C-L>")' : ''
 augroup END
 # 2}}}
-# 07.20 FsetNumberWidth() on entering a buffer {{{2
+# 07.20 VimrcSetNumberWidth() on entering a buffer {{{2
 augroup triggersetnumberwidth
   autocmd!
-  autocmd BufEnter * g:FsetNumberWidth()
+  autocmd BufEnter * g:VimrcSetNumberWidth()
 augroup END
 # 2}}}
 # 07.30 skeletons (templates) {{{2
@@ -732,7 +777,7 @@ augroup END
 # Define the autocmd for when a colorscheme is changed
 augroup vimrc-ColorScheme
   autocmd!
-  autocmd ColorScheme * call g:ColoursConsoleReset()
+  autocmd ColorScheme * call g:VimrcColoursConsoleReset()
 augroup END
 # 2}}}
 # 09.60 [Suppressed] colorschemes {{{2
@@ -763,15 +808,15 @@ augroup END
 # "Y" 	https://github.com/kennypete/vim-tene
 # vim-ai - only use where vim9 and Python3 align - not using - commented out
 #if v:versionlong >= 9001499
-#  g:Fpackadd('vim-ai')
+#  g:VimrcPackAdd('vim-ai')
 #endif
 g:asciidoctor_allow_uri_read = " -a allow-uri-read"
-g:Fpackadd("vim-asciidoctor")
-g:Fpackadd("vim-characterize")
-# g:Fpackadd("vim-combining2")
+g:VimrcPackAdd("vim-asciidoctor")
+g:VimrcPackAdd("vim-characterize")
+# g:VimrcPackAdd("vim-combining2")
 g:borderchars = ['', ' ', '', ' ', '', '', '', '']
-g:Fpackadd("vim-popped")
-g:Fpackadd("vim-sents")
+g:VimrcPackAdd("vim-popped")
+g:VimrcPackAdd("vim-sents")
 # vim-tene (my own highly configurable and flexible statusline)
 try
   # Create the g:tene_ga dictionary, if necessary
