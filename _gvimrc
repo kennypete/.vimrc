@@ -75,10 +75,18 @@ if has('gui_gtk3')
   set guifont=FiraCode\ Nerd\ Font\ Mono\ Regular\ 12,FiraCode\ NFM\ 12
 elseif has('gui_win32')
   set guifont=FiraCode_Nerd_Font_Mono:h12,FiraCode_NFM:h12
-  #set guifont=FiraCode_Nerd_Font_Mono:h12
 endif
-#   guifontset=  Not used as I am happy with just FiraCode_NFM
-#   guifontwide=  Not used, but maybe one day investigate using
+g:FiraCode = &guifont
+g:DejaVu = 'DejaVuSansM_Nerd_Font_Mono:h12'
+# https://github.com/be5invis/Iosevka/blob/v31.7.1/doc/PACKAGE-LIST.md
+# TTF zip: Regular, Bold; Extended, ExtendedBold
+g:Iosevka = 'Iosevka_Fixed_SS05:h12'
+g:IosevkaWide = 'Iosevka_Fixed_SS05_Extended:h12'
+# [tried; v. narrow;] g:IosevkaNFM = 'Iosevka_NFM:h14:cANSI:qDRAFT'
+command Fontd [&guifont, &guifontwide] = [g:DejaVu, '']
+command Fontf [&guifont, &guifontwide] = [g:FiraCode, '']
+command Fonti [&guifont, &guifontwide] = [g:Iosevka, g:IosevkaWide]
+#   guifontset=  Not used, not needed
 #   guiligatures=  Not used, and only applicable to GTK GUI
 #   guioptions=  Extend guioptions to....  Refer :h 'guioptions'
 set guioptions+=!abceghLmrtT

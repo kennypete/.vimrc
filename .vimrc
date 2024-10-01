@@ -38,11 +38,11 @@ set t_u7=
 # - Win32 Console vim.exe run from PowerShell (7.4.0) or Windows PowerShell
 #  %SystemRoot%\syswow64\WindowsPowerShell\v1.0\powershell.exe
 #  C:\Program Files\PowerShell\7\pwsh.exe" -WorkingDirectory ~
-if !has("gui_running")
-  &t_EI = "\<esc>[1 q"   # blinking block
-  &t_SI = "\<esc>[5 q"   # blinking I-beam in insert mode
-  &t_SR = "\<esc>[3 q"   # blinking _underline in replace mode
-endif
+#if !has("gui_running")
+&t_EI = "\<esc>[1 q"   # blinking block - 0 in iSH - TODO
+&t_SI = "\<esc>[5 q"   # blinking I-beam in insert mode
+&t_SR = "\<esc>[3 q"   # blinking _underline in replace mode
+#endif
 # # set lines=28  # Commented out (for PowerShell) - it makes things go awry
 # # There is no clean way of determining whether you are in PowerShell or
 # # the Win32 Console run from File Explorer.
@@ -159,6 +159,17 @@ set display=truncate
 set encoding=utf-8
 #   expandtab  Uses n spaces to insert a <Tab>
 set expandtab
+#   fileencodings  Handles anything w/ BOM, [utf-32]ucs-4, utf-8, latin1
+#                  Doesn't handle utf-16 be/le w/o BOM or ucs-4 be/le w/o BOM
+#                  To handle these, temporarily change fencs to include them
+#                  So, to handle utf-16 be  :set fencs^=utf-16
+#                                utf-16 le  :set fencs^=utf-16le
+#                                ucs-4 be   :set fencs^=ucs-4
+#                                ucs-4 le   :set fencs^=ucs-4le
+#                  ...noting this will **break** other fenc, so opening a
+#                  utf-8 after applying one of the above will cause those
+#                  files to 'fail'.  So, make such a change temporarily!
+set fileencodings=ucs-bom,utf-8,default,latin1
 #   fileformats  New buffers' <EOL> is <NL> (linefeed, U+000A) not <CR><NL>
 set fileformats=unix,dos
 #   fillchars  I prefer more distinctive characters for folds + the vsplit bar
@@ -321,7 +332,7 @@ set winminheight=3
 # cryptmethod; cscop*; debug; define; dictionary; diff*;
 # digraph; directory; eadirection; edcompatible; emoji; equalalways;
 # equalprg; errorbells; errorf*; esckeys; eventignore; exrc;
-# fileencodings; fileignorecase; fkmap (r); foldopen; formatprg; fsync;
+# fileignorecase; fkmap (r); foldopen; formatprg; fsync;
 # gdefault (d); grepformat; grepprg; helpfile; helplang; highlight; hkma*;
 # icon; iconstring; ignorecase; im*; include*; indentexpr; insertmode;
 # isfname; isident; isprint; joinspaces; lang*; lazyredraw; linespace; lisp*;
@@ -353,28 +364,9 @@ set nowrap
 # 2}}}
 # }}}
 # 04 Commands {{{
-# DiffOrig {{{2
-# Displays a diff between the buffer and the file loaded
-if !exists(":DiffOrig")
-  command DiffOrig vert new | set bt=nofile | r ++edit #
-  \ | 0d_ | diffthis | wincmd p | diffthis
-endif
-# 2}}}
-# GenerateUnicode (Generate a Unicode table between two nnnn of U+nnnn) {{{2
-# Usage example:
-# :GenerateUnicode 161, 199
-command! -nargs=+ -complete=command GenerateUnicode
-      \ silent execute ':call g:VimrcGenerateUnicode(' .. <q-args> .. ')'
-# 2}}}
-# Redirr {{{2
-# Redirects outputs of a command to the @p register
-# This means, for example, :Redirr filter /S[duh]/ command
-# will put the output of that command to the p register.
-# Then all you need to do is "pp to put the contents of that
-# register p to the buffer in Normal mode
-command! -nargs=+ -complete=command Redirr redir @p
-      \ | silent execute <q-args>
-      \ | redir END
+# B (Goes to first instance of a window of {buffer number} in _any_ tab {{{2
+command! -nargs=1 -complete=command B
+      \ silent execute ':call g:VimrcGoToBufferInTab(' .. <f-args> .. ')'
 # 2}}}
 # Bod {num}? (Deletes all buffers bar %/{num}) {{{2
 command! -nargs=? -complete=command Bod
@@ -384,16 +376,40 @@ command! -nargs=? -complete=command Bod
 command! -nargs=? -complete=command Bow
       \ silent execute ':call g:VimrcBufferOnlyWipeout(' .. <q-args> .. ')'
 # 2}}}
-# B {{{2
-# Goes to the first instance of a window of {buffer number} in _any_ tab
-command! -nargs=1 -complete=command B
-      \ silent execute ':call g:VimrcGoToBufferInTab(' .. <f-args> .. ')'
+# DiffOrig (Displays a diff between the buffer and the file loaded) {{{2
+if !exists(":DiffOrig")
+  command DiffOrig vert new | set bt=nofile | r ++edit #
+  \ | 0d_ | diffthis | wincmd p | diffthis
+endif
 # 2}}}
-# Mb and Gb {{{2
+# LL [and Global] (Location list for {word}) {{{2
+# Using LL as a mnemonic for Location List {word}
+command! -bang -nargs=1 -range=% Global
+      \ g:VimrcGlobal(<line1>, <line2>, <q-args>, expand('<bang>'))
+command! -bang -nargs=1 -range=% LL
+      \ g:VimrcGlobal(<line1>, <line2>, <q-args>, expand('<bang>'))
+# 2}}}
+# GenerateUnicode (Generate a Unicode table between two nnnn of U+nnnn) {{{2
+# Usage example:
+# :GenerateUnicode 161, 199
+command! -nargs=+ -complete=command GenerateUnicode
+      \ silent execute ':call g:VimrcGenerateUnicode(' .. <q-args> .. ')'
+# 2}}}
+# Mb and Gb (Mark/Goto a buffer that's been 'marked') {{{2
 # Mark a buffer and go to a buffer (uses :B command, above)
 g:mbuf = {}
 command! -nargs=1 -complete=command Mb g:mbuf[<q-args>] = bufnr('%')
 command! -nargs=1 -complete=command Gb execute ':B ' .. g:mbuf[<q-args>]
+# 2}}}
+# Redirr (Redirect output of a command to register p) {{{2
+# Redirects outputs of a command to the @p register
+# This means, for example, :Redirr filter /S[duh]/ command
+# will put the output of that command to the p register.
+# Then all you need to do is "pp to put the contents of that
+# register p to the buffer in Normal mode
+command! -nargs=+ -complete=command Redirr redir @p
+      \ | silent execute <q-args>
+      \ | redir END
 # 2}}}
 # }}}
 # 05 Functions {{{
@@ -438,7 +454,7 @@ enddef
 # low impact (using default colorscheme only, and tweaking from there in all
 # variants) PLUS considering vim-tene, which re-uses some of the in-built
 # highlight groups, so some need slight tweaking.
-def g:VimrcColoursConsoleReset(): void
+def! g:VimrcColoursConsoleReset(): void
   # default colorscheme overrides (they persist until the colorscheme changes)
   if !has("gui_running")
     if g:colors_name == "default"
@@ -468,38 +484,9 @@ def g:VimrcColoursConsoleReset(): void
     # Handled in _gvimrc
   endif
 enddef
-# revise # Function to handle the ColorSchemeChange event - this sets the highlights
-# revise # above and in the .gvimrc / _gvimrc back to what I want them to be again,
-# revise # regardless of what colorscheme is chosen.
-# revise def ColorSchemeChanged()
-# revise   if has("gui_running")
-# revise     highlight ColorColumn guibg=LightGrey
-# revise     highlight CursorLineNr guifg=DarkGrey gui=bold
-# revise     highlight LineNr guifg=Grey
-# revise     highlight ModeMsg guifg=DarkGrey gui=bold
-# revise     highlight NonText guifg=LightGrey guibg=White
-# revise     highlight SpecialKey guibg=LightGrey guifg=White
-# revise   elseif !has("gui_running")
-# revise     highlight ColorColumn ctermbg=DarkBlue
-# revise     highlight CursorLineNr ctermfg=White cterm=bold
-# revise     highlight LineNr ctermfg=DarkGrey
-# revise     highlight ModeMsg ctermfg=LightGrey cterm=bold
-# revise     highlight NonText ctermfg=DarkGrey
-# revise     highlight SpecialKey ctermfg=Grey
-# revise   elseif has("unix") && !has("gui_running")
-# revise     # nothing for now - I think these were for Debian 11 native, GUI perhaps?
-# revise     # highlight CursorLineNr guifg=DarkGrey cterm=bold ctermfg=15
-# revise     # highlight LineNr guifg=Grey ctermfg=8
-# revise     # highlight NonText ctermfg=238 guifg=#d0d0d0
-# revise     # highlight SpecialKey ctermfg=Grey guibg=Grey guifg=White
-# revise     # highlight ModeMsg ctermfg=252 cterm=bold gui=bold guifg=Grey
-# revise   else
-# revise     # Default behavior otherwise
-# revise   endif
-# revise enddef
 # }}}
 # g:VimrcCycleVirtualEdit (Cycle virtualedit local setting) {{{2
-def g:VimrcCycleVirtualEdit()
+def! g:VimrcCycleVirtualEdit()
   if &virtualedit == "all"
     set virtualedit=block
   elseif &virtualedit == "block"
@@ -516,7 +503,7 @@ enddef
 # 2}}}
 # g:VimrcGenerateUnicode (Generate Unicode Characters Table) {{{2
 # NB: first and last are decimal values so, e.g, 162 is hexadecimal A2
-def g:VimrcGenerateUnicode(first: number, last: number): void
+def! g:VimrcGenerateUnicode(first: number, last: number): void
   var i = first
   while i <= last
     @c = printf('%04X ', i) .. '	'
@@ -528,8 +515,38 @@ def g:VimrcGenerateUnicode(first: number, last: number): void
   endwhile
 enddef
 # 2}}}
+# g:VimrcGlobal (Global command to populate location list) {{{2
+def! g:VimrcGlobal(line1: number, line2: number, pat: string,
+    bang: string): void
+  var operator = bang == '!' ? '!~' : '=~'
+  var padding_top = line1 > 1 ? line1 - 1 : 0
+  var bufnr = bufnr()
+  var loc_title_range = (line1 == 1 && line2 == line('$')) ? '%' :
+    (line1 .. ',' .. line2)
+  # Directly iterating over the line numbers - an idiomatic, simple, approach
+  var loc_list = []
+  for dot in range(line1, line2 + 1)
+    var line = getline(dot)
+    if line =~# '.*' .. pat .. '.*'
+      loc_list->add({'bufnr': bufnr, 'lnum': dot, 'text': line, 'valid': 1})
+    endif
+  endfor
+  # Load the location list, presuming it is not empty, of course
+  if !empty(loc_list)
+    setloclist(win_getid(), [], ' ', { 'title': ':' .. loc_title_range ..
+      'Global ' .. pat, 'items': loc_list })
+    lwindow
+    lfirst
+    wincmd p
+  endif
+  # Create a global mapping for <S-Enter>, conditional on the previous
+  # window being a quickfix or location list
+  nnoremap <expr> <S-Enter> getwinvar(winnr(), '&buftype') ==# 'quickfix' ?
+        \ "\<Enter>\<C-w>p" : "\<Enter>"
+enddef
+# 2}}}
 # g:VimrcGoToBufferInTab (Go to buffer number in _any_ tab) {{{2
-def g:VimrcGoToBufferInTab(b: number): void
+def! g:VimrcGoToBufferInTab(b: number): void
   var c = tabpagenr()
   for t in range(tabpagenr('$'))
     execute ':norm ' .. (t + 1) .. 'gt'
@@ -545,7 +562,7 @@ def g:VimrcGoToBufferInTab(b: number): void
 enddef
 # 2}}}
 # g:VimrcPackadd (try & catch packadd! a plugin; echo a msg if it fails) {{{2
-def g:VimrcPackAdd(aplugin: string): void
+def! g:VimrcPackAdd(aplugin: string): void
   try
     # This must use execute, not just packadd! because of passing the arg
     execute "packadd! " .. aplugin
@@ -556,12 +573,12 @@ enddef
 # 2}}}
 # g:VimrcPopupModeCode (Generate a popup notification with the mode code) {{{2
 # Makes a popup notification with the current mode and state - for debugging
-def g:VimrcPopupModeCode()
+def! g:VimrcPopupModeCode(): void
   popup_notification(mode(1) .. state(), {time: 555})
 enddef
 # 2}}}
 # g:VimrcSetNumberWidth (Set numberwidth in line with lines in the buffer {{{2
-def g:VimrcSetNumberWidth()
+def! g:VimrcSetNumberWidth(): void
   var num_lines = line('$')
   var new_width = len(num_lines) + 2
   execute 'set numberwidth=' .. new_width
@@ -570,7 +587,7 @@ enddef
 # g:VimrcToggleComment (Toggle code commenting of selected/current line) {{{2
 g:comment_map = {"python": '#', "sh": '#', "bat": 'REM', "vbs": "'",
 \ "omnimark": ";", "vim": '#'}
-def g:VimrcToggleComment()
+def! g:VimrcToggleComment(): void
   if has_key(g:comment_map, &filetype)
     var comment_leader = g:comment_map[&filetype]
     if getline('.') =~ "^\\s*" .. comment_leader .. " "
@@ -591,7 +608,7 @@ def g:VimrcToggleComment()
 enddef
 # 2}}}
 # g:VimrcToggleLineNumber (line numbers: literal > relative > none) {{{2
-def g:VimrcToggleLineNumber()
+def! g:VimrcToggleLineNumber(): void
   if !&number
     set number
     set norelativenumber
@@ -604,7 +621,7 @@ def g:VimrcToggleLineNumber()
 enddef
 # 2}}}
 # g:VimrcWindowWrapToggle (Toggle current window wrapping) {{{2
-def g:VimrcWindowWrapToggle()
+def! g:VimrcWindowWrapToggle(): void
   if &wrap == v:false
     set wrap
   else
@@ -613,7 +630,7 @@ def g:VimrcWindowWrapToggle()
 enddef
 # 2}}}
 # g:VimrcXfceCustomCursorBlock (XFCE cursor shapes BLOCK) {{{2
-def g:VimrcXfceCustomCursorBlock()
+def! g:VimrcXfceCustomCursorBlock(): void
   if isdirectory('~/.config/xfce4')
     if filewritable('~/.config/xfce4/terminal/terminalrc')
         silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_IBEAM/TERMINAL_CURSOR_SHAPE_BLOCK/' ~/.config/xfce4/terminal/terminalrc"
@@ -622,7 +639,7 @@ def g:VimrcXfceCustomCursorBlock()
 enddef
 # 2}}}
 # g:VimrcXfceCustomCursorIbeam (XFCE cursor shapes IBEAM) {{{2
-def g:VimrcXfceCustomCursorIbeam()
+def! g:VimrcXfceCustomCursorIbeam(): void
   if isdirectory('~/.config/xfce4')
     if filewritable('~/.config/xfce4/terminal/terminalrc')
       silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_BLOCK/TERMINAL_CURSOR_SHAPE_IBEAM/' ~/.config/xfce4/terminal/terminalrc"
@@ -736,13 +753,17 @@ vnoremap <C-Up> gk
 # augroup MyColours is defined in 02 Highlights
 # 07.10 Normal mode forced when moving to an unmodifiable buffer {{{2
 #	https://github.com/vim/vim/issues/12072
-augroup forcenormal
-  autocmd!
-  autocmd BufEnter * execute (!&modifiable && !&insertmode)
-        \ ? ':call feedkeys("\<Esc>")' : ''
-  autocmd BufEnter * execute (!&modifiable && &insertmode)
-        \ ? ':call feedkeys("\<C-L>")' : ''
-augroup END
+# [I suspect that this is causing the terminal to pause for ages when
+# not Windows or GUI, so added, _only_ when "builtin_gui" or "win32"]
+if &term =~ '[bw]'
+  augroup forcenormal
+    autocmd!
+    autocmd BufEnter * execute (!&modifiable && !&insertmode)
+          \ ? ':call feedkeys("\<Esc>")' : ''
+    autocmd BufEnter * execute (!&modifiable && &insertmode)
+          \ ? ':call feedkeys("\<C-L>")' : ''
+  augroup END
+endif
 # 2}}}
 # 07.20 VimrcSetNumberWidth() on entering a buffer {{{2
 augroup triggersetnumberwidth
@@ -804,7 +825,8 @@ augroup END
 #     	https://github.com/kennypete/vim-combining2
 # "Y" 	https://github.com/kennypete/vim-popped
 # "Y" 	https://github.com/kennypete/vim-sents
-# "Y" 	https://github.com/kennypete/vim-characterize (tpope fork +)
+# "Y" 	https://github.com/kennypete/vim9-cpr
+#     	https://github.com/kennypete/vim-characterize (tpope fork +)
 # "Y" 	https://github.com/kennypete/vim-tene
 # vim-ai - only use where vim9 and Python3 align - not using - commented out
 #if v:versionlong >= 9001499
@@ -812,7 +834,24 @@ augroup END
 #endif
 g:asciidoctor_allow_uri_read = " -a allow-uri-read"
 g:VimrcPackAdd("vim-asciidoctor")
-g:VimrcPackAdd("vim-characterize")
+# g:champ_percent = false
+# g:champ_pairs = false
+# g:champ_html5 = false
+# g:champ_digraphs = false
+# g:champ_octal = false
+# g:champ_Ugc = false
+# g:champ_Uccc = false
+# g:champ_Ubc = false
+# g:champ_Udm = false
+# g:champ_Unv = false
+# g:champ_emojis = false
+# g:champ_nmap_ga = false
+g:VimrcPackAdd("vim9-champ")
+#nnoremap <Leader>ga <Nop>
+#nnoremap <Leader>d <Plug>ChampPopup;
+#nnoremap <Leader>m <Plug>Champ;
+#nmap <Leader>gp <Plug>ChampPopup;
+# g:VimrcPackAdd("vim-characterize") TEMP COMMENTED OUT
 # g:VimrcPackAdd("vim-combining2")
 g:borderchars = ['', ' ', '', ' ', '', '', '', '']
 g:VimrcPackAdd("vim-popped")
@@ -824,7 +863,7 @@ try
   # Use pilcrow for line numbers ASCII and non-GUI (e.g., PowerShell)
   # Commenting these out because FiraCode Mono should be everywhere
   # if has("gui_running")
-  #   g:tene_ga["line()"] = ['¶', '']
+     # testing g:tene_ga["line()"] = ['_', '☺️'] # 
   # else
   #   g:tene_ga["line()"] = ['¶', '¶']
   # endif
@@ -867,9 +906,12 @@ endtry
 syntax enable
 # Refer :h filetype-overview  -  Current status? Use :filetype
 filetype plugin indent on
+# Set tabs to two spaces in Go and noexpandtab like my default
+autocmd FileType go setlocal noexpandtab tabstop=2 shiftwidth=2
 #}}}
 # 88 Deleted / moved temporally, and commented out {{{
 # }}}
 # 98 Development {{{
+digraphs :) 128512
 # }}}
 # vim: cc=+1 et fdm=marker ft=vim sta sts=0 sw=2 ts=8 tw=79
