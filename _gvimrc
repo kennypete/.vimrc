@@ -171,7 +171,7 @@ if v:versionlong >= 8024807
       endif
     enddef
     def g:FontSizeOriginal(): void
-      &guifont = substitute(&guifont, ' \d\+\ze\($\|,\)', gf_new_font_size, 'g')
+      &guifont = substitute(&guifont, '\d\+\ze\($\|,\)', g:gf_size_orig, 'g')
     enddef
   elseif has('gui_win32')
     # Replace all font size digit(s).  For win32, all instances of ':h' preceding
@@ -248,29 +248,24 @@ endif
 #        before 8.2 with patch 5069 (they do nothing).  Refer the link, below.
 # https://github.com/vim/vim/commit/ebb01bdb273216607f60faddf791a1b378cccfa8
 #     2. In Windows, <C-{char}> mappings will not work before 8.2 with
-#        patch 4807 - that has not been factored because it's not a big deal
-#        given I use 8023434-8024807 only for testing.
+#        patch 4807, and even then, it seems flakey!
 #     3. Before v9.0 patch 1112 <C-_> will not work on Windows.  Refer:
 # https://github.com/vim/vim/commit/7b0afc1d7698a79423c7b066a5d8d20dbb8a295a
-if has('gui_gtk') || has('gui_win32') # only gtk and win32 have the functions
-  if v:versionlong >= 8025069
-    # Refer #1, above.
+if v:versionlong >= 8024807 && (has('gui_gtk') || has('gui_win32'))
+  # Mappings generally with F10 - reliable in both gui_gtk and gui_win32
+  nnoremap <C-F10> <Cmd>call g:FontSizeMinus()<CR>
+  nnoremap <S-F10> <Cmd>call g:FontSizePlus()<CR>
+  nnoremap <F10> <Cmd>call g:FontSizeOriginal()<CR>
+  if has('gui_gtk') || (has('gui_win32') && v:versionlong >= 8025069)
     noremap <C-ScrollWheelUp> <Cmd>call g:FontSizePlus()<CR>
     noremap <C-ScrollWheelDown> <Cmd>call g:FontSizeMinus()<CR>
   endif
-  if v:versionlong >= 8024807
-    # (<C-0> works everywhere back to 8024807)
-    nnoremap <C-0> <Cmd>call g:FontSizeOriginal()<CR>
+  if has('gui_gtk') || (has('gui_win32') && v:versionlong >= 9001112)
+    nnoremap  <Cmd>call g:FontSizeMinus()<CR>
   endif
-  if !has('win32') || (has('win32') && v:versionlong >= 8024807)
-    # Refer #2, above.
+  if has('gui_gtk')
     nnoremap <C-=> <Cmd>call g:FontSizePlus()<CR>
-    if !has('win32') || (has('win32') && v:versionlong >= 9001112)
-      nnoremap  <Cmd>call g:FontSizeMinus()<CR>
-    else
-      # Refer #3, above.
-      nnoremap <C-=>= <Cmd>call g:FontSizeMinus()<CR>
-    endif
+    nnoremap <C-0> <Cmd>call g:FontSizeOriginal()<CR>
   endif
 endif
 #}}}
