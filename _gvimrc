@@ -9,7 +9,9 @@ endif
 vim9script
 # .gvimrc / _gvimrc
 # 01 Windows, WSL, GUI options {{{
+# ----------------------------------------------------------------------------
 # GUI toolbar
+# ----------------------------------------------------------------------------
 if has("toolbar")
   if len(split(execute('amenu ToolBar'), '\n')) > 0
     aunmenu ToolBar
@@ -57,12 +59,24 @@ if has("toolbar")
 endif
 #}}}
 # 02 Highlights {{{
-# Make sure that the default g:colors_name exists and is default (which it
-# should be anyhow since that is the default rather than empty!)  NB: Actually
-# calling colorscheme default does weird things here - AVOID doing that!
-if !exists("g:colors_name")
-  g:colors_name = 'default'
-endif
+g:tene_hi = exists('g:tene_hi') ? g:tene_hi : {}
+# 02.1 Retrobox {{{2
+def g:Retrobox(): void
+  colorscheme retrobox
+  &background = 'dark'
+  g:tene_mode = 0
+  hi! StatusLineTerm term=bold,reverse cterm=bold ctermfg=0 ctermbg=10 gui=bold guifg=bg guibg=#98971a
+  #hi link StatusLineTermNC NONE
+  hi! link StatusLineTermNC Search
+  g:tene_hi['c'] = 'StatusLineTermNC'
+  g:tene_hi['i'] = 'DiffText'
+  g:tene_hi['n'] = 'MessageWindow'
+  g:tene_hi['r'] = 'IncSearch'
+  g:tene_hi['v'] = 'Visual'
+  hi ModeMsg term=bold cterm=bold gui=bold guifg=darkgrey
+  # See TeneHimod(), which ensures darkorange/orange + indicator
+enddef
+# 2}}}
 # }}}
 # 03 Settings (global) {{{
 #   columns  Set columns to 80 + 1 (colorcolumn) + 3 (number) + 1 (foldcolumn)
@@ -76,16 +90,6 @@ if has('gui_gtk3')
 elseif has('gui_win32')
   set guifont=FiraCode_Nerd_Font_Mono:h12,FiraCode_NFM:h12
 endif
-g:FiraCode = &guifont
-g:DejaVu = 'DejaVuSansM_Nerd_Font_Mono:h12'
-# https://github.com/be5invis/Iosevka/blob/v31.7.1/doc/PACKAGE-LIST.md
-# TTF zip: Regular, Bold; Extended, ExtendedBold
-g:Iosevka = 'Iosevka_Fixed_SS05:h12'
-g:IosevkaWide = 'Iosevka_Fixed_SS05_Extended:h12'
-# [tried; v. narrow;] g:IosevkaNFM = 'Iosevka_NFM:h14:cANSI:qDRAFT'
-command Fontd [&guifont, &guifontwide] = [g:DejaVu, '']
-command Fontf [&guifont, &guifontwide] = [g:FiraCode, '']
-command Fonti [&guifont, &guifontwide] = [g:Iosevka, g:IosevkaWide]
 #   guifontset=  Not used, not needed
 #   guiligatures=  Not used, and only applicable to GTK GUI
 #   guioptions=  Extend guioptions to....  Refer :h 'guioptions'
@@ -110,22 +114,41 @@ set guioptions-=m
 set guitablabel=%{%join(tabpagebuflist('%'),'\ ˙\ ')..'\ %t'%}
 #   guitabtooltip  Consider using this.  Maybe a function; make it useful?
 # set renderoptions - :h 'renderoptions'
-#             "only available when compiled with GUI and DIRECTX on MS-Windows"
-#             See 06 Mappings, below - it has a toggleable Leader option
-#             The reason for this is that although certainly the
-#             "drawn glyphs more beautiful than default GDI", meaning things
-#             like coloured emoji are awesome, I hate ligatures in coding
-#             fonts, so having the option to toggle this is the go.
-#   # Keep cmd.exe default as that keeps gx working!
-#   # set shell=bash.exe # Vim plays nicest with Linux/bash, so exploit that
-#   # set shell=powershell.exe # system32\WindowsPowerShell\v1.0\powershell.exe
-#   let $PYTHONPATH=#~/AppData/Local/Programs/Python/Python311# # needed?
-# endif
+#      'only available when compiled with GUI and DIRECTX on MS-Windows'
+#      See 06 Mappings, below - it has a toggleable Leader option
+#      The reason for this is that although certainly the
+#      'drawn glyphs more beautiful than default GDI', meaning things
+#      like coloured emoji are awesome, I hate ligatures in coding
+#      fonts, so having the option to toggle this is the go.
 # All of these are in the .vimrc / _vimrc.  There are none needed here
 #   titlestring= This is also set in .vimrc, but it's overridden for gvim here
 set titlestring=%{expand(\"%:p\")}\ %{&modified&&&buftype!='terminal'?'\ +':''}%{&readonly?'\ RO':''}%{(!&modifiable&&mode()!=#'t')?'\ -':''}%{&buftype=='help'?'\ HLP':''}
+# Use PowerShell 7 for the default terminal when using Windows 11 / win64
+if has('win64')
+  set shell=pwsh
+endif
 # }}}
-# 04 Commands (none yet for gvim specifically) {{{
+# 04 Commands {{{
+#
+#   CCC   OOO    MM MM    MM MM    AA   NNN   DDD   SSS
+#  C     O   O  M  M  M  M  M  M  A  A  N  N  D  D  S
+#  C     O   O  M  M  M  M  M  M  AAAA  N  N  D  D  SSS
+#  C     O   O  M  M  M  M  M  M  A  A  N  N  D  D    S
+#   CCC   OOO   M  M  M  M  M  M  A  A  N  N  DDD   SSS
+#
+# Provide for easy switching between my preferred fonts (depending on context)
+g:FiraCode = &guifont
+g:DejaVu = 'DejaVuSansM_Nerd_Font_Mono:h12'
+g:Iosevka = 'Iosevka_Fixed_SS05:h12'
+g:IosevkaWide = 'Iosevka_Fixed_SS05_Extended:h12'
+# https://github.com/be5invis/Iosevka/blob/v31.7.1/doc/PACKAGE-LIST.md
+# TTF zip: Regular, Bold; Extended, ExtendedBold
+# [tried; v. narrow;] g:IosevkaNFM = 'Iosevka_NFM:h14:cANSI:qDRAFT'
+command Fontd [&guifont, &guifontwide] = [g:DejaVu, '']
+command Fontf [&guifont, &guifontwide] = [g:FiraCode, '']
+command Fonti [&guifont, &guifontwide] = [g:Iosevka, g:IosevkaWide]
+command Default colorscheme default
+command Retrobox g:Retrobox()
 # }}}
 # 05 Functions {{{
 # 05.10 Font Size {{{2
@@ -211,9 +234,27 @@ if v:versionlong >= 8024807
 endif
 # }}}
 # 05.20 Colorscheme overrides {{{2
-def g:ColoursGUIreset(): void
+def HiDefaultGUIreset(): void
+  # Make sure that the default g:colors_name exists and is default (which it
+  # should be anyhow since that is the default rather than empty!)
+  # NB: Calling colorscheme default does weird things ... don't do that!
+  if !exists("g:colors_name")
+    g:colors_name = "default"
+  endif
   # default colorscheme overrides (they persist until the colorscheme changes)
+  # maybe this is background 'light' only and needs a 'dark' version too, but
+  # I use Retrobox if using 'dark', so not really needed?
   if g:colors_name == "default"
+    # background to the same colour as the toolbar, etc.
+    highlight Normal guibg=#f0f0f0
+    # in default, use a dark green background and light grey text in :term
+    if has('win64')
+      # this ensures that PowerShell works when it has a dark theme in Win64
+      highlight Terminal guibg=#0a2a0a guifg=#f0f0f0
+    else
+      # this ensures that bash works with dark theme in WSL
+      highlight Terminal guibg=#0c0c0c guifg=#cccccc
+    endif
     # line numbers
     highlight LineNr guifg=Grey
     # the line number of the active cursor
@@ -232,11 +273,71 @@ def g:ColoursGUIreset(): void
     #  highlight Visual guibg=Grey
     #  highlight DiffAdd ctermbg=Blue
     #endif
+    # Set g:tene_hi dictionary back to defaults
+    g:tene_hi['c'] = 'StatusLineTermNC'
+    g:tene_hi['i'] = 'WildMenu'
+    g:tene_hi['n'] = 'Visual'
+    g:tene_hi['r'] = 'Pmenu'
+    g:tene_hi['v'] = 'DiffAdd'
   else
     # Do nothing special - only use default!
   endif
 enddef
-# }}}
+
+# TeneHimod, which works for all the in-built colorschemes and should
+# for any colorscheme (except where orange/darkorange is part of the
+# StatusLine, perhaps (but who'd do that, really?!)
+def TeneHimod(): void
+  # Clear teneHimod highlight group
+  hi teneHimod NONE
+  # Get the settings from hi StatusLine and adjust for the colorscheme
+  redir @s | silent! highlight StatusLine | redir END
+  # Create a list with the StatusLine highlight group's settings, ensuring
+  # there are no pesky newlines in it.  We want just the + indicator to be
+  # a different colour, so that needs to change either guifg or guibg
+  # depending on whether it is `reverse`.  Note that because of the redir,
+  # the text may include linefeed U+000A characters and loads of spaces, so
+  # this is tidied up here when creating the list.
+  var s_settings: list<string> = @s
+    ->substitute('[\u000A]\s\+', ' ', '')
+    ->substitute('[\u000A]StatusLine\s\+xxx\s\+', '', '')
+    ->split(' ')
+  # Clone the StatusLine highlight group, initially
+  try
+    silent! execute 'hi teneHimod ' .. join(s_settings)
+  finally
+    # nothing
+  endtry
+  # Now add the appropriate guifg or guibg to get the orange + indicator
+  var new_teneHimod: string = ''
+  # Default to guifg being darkorange if there's a dark &bg /orange if light
+  if &background == 'dark'
+    new_teneHimod = ' guifg=darkorange'
+  else
+    new_teneHimod = ' guifg=orange'
+  endif
+  # ... but, if there is a gui `reverse` in play, make it guibg as
+  # either darkorange or orange, otherwise it will be applied to the wrong
+  # part of the highlight group
+  for item in range(0, len(s_settings) - 1)
+    if (s_settings[item] == 'gui=bold,reverse' ||
+        s_settings[item] == 'gui=reverse')
+      if &background == 'dark'
+        new_teneHimod = ' guibg=darkorange'
+      else
+        new_teneHimod = ' guibg=orange'
+      endif
+      break
+    endif
+  endfor
+  try
+    silent! execute 'hi teneHimod ' .. new_teneHimod
+    g:tene_hi['himod'] = 'teneHimod'
+  finally
+    # Do nothing
+  endtry
+enddef
+# 2}}}
 # }}}
 # 06 Mappings {{{
 # Mapping to toggle renderer in Windows: needs Win32 and directx
@@ -272,14 +373,22 @@ endif
 # 07 Autocommands {{{
 augroup gvimrc-ColorScheme
   au!
-  au ColorScheme * call g:ColoursGUIreset()
+  au GUIEnter * call HiDefaultGUIreset()
+  # For vim-tene, in the GUI make the himod text darkorange / orange
+  au GUIEnter * call TeneHimod()
+  au ColorScheme *:default call HiDefaultGUIreset()
+  # ... and ensure it's reapplied to the right place (be it guibg or guifg)
+  # when the colorscheme changes
+  au ColorScheme * call TeneHimod()
 augroup END
 # }}}
-# 08 Plugins (none specifically for gvim currently) {{{
+# 08 Plugins (include any configuration to them) {{{
 # Using the native Vim plugin handling. :h packadd
 # * Plugins path:  $HOME/.vim/pack/plugins  $HOME\vimfiles\pack\plugins
 # * To determine the remote git repository: git remote show origin
 # Plugins.  Currently in use indicated with "Y", orig unless "(specifics)":
+# For vim-tene, colour the modified indicator in the GUI
+g:tene_himod = 1
 # }}}
 # 09 Syntax + filetype (n/a for gvim specifically?) {{{
 # }}}
