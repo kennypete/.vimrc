@@ -234,7 +234,7 @@ if v:versionlong >= 8024807
 endif
 # }}}
 # 05.20 Colorscheme overrides {{{2
-def HiDefaultGUIreset(): void
+def HiGUIreset(): void
   # Make sure that the default g:colors_name exists and is default (which it
   # should be anyhow since that is the default rather than empty!)
   # NB: Calling colorscheme default does weird things ... don't do that!
@@ -244,7 +244,10 @@ def HiDefaultGUIreset(): void
   # default colorscheme overrides (they persist until the colorscheme changes)
   # maybe this is background 'light' only and needs a 'dark' version too, but
   # I use Retrobox if using 'dark', so not really needed?
+  # This has been checked by Redirr hi on startup compared with DiffOrig to
+  # Redirr hi toggled from Normal to Retrobox and back and it's all good.
   if g:colors_name == "default"
+    # popup_notification("HiGUIreset", {time: 2000})
     # background to the same colour as the toolbar, etc.
     highlight Normal guibg=#f0f0f0
     # in default, use a dark green background and light grey text in :term
@@ -269,10 +272,6 @@ def HiDefaultGUIreset(): void
     highlight SpecialKey guifg=LightGrey
     # Inactive statusline less prominent
     highlight StatusLineNC guifg=Black guibg=Grey gui=NONE
-    #if has('Win32') # Windows Git Bash, Native Linux
-    #  highlight Visual guibg=Grey
-    #  highlight DiffAdd ctermbg=Blue
-    #endif
     # Set g:tene_hi dictionary back to defaults
     g:tene_hi['c'] = 'StatusLineTermNC'
     g:tene_hi['i'] = 'WildMenu'
@@ -373,10 +372,10 @@ endif
 # 07 Autocommands {{{
 augroup gvimrc-ColorScheme
   au!
-  au GUIEnter * call HiDefaultGUIreset()
+  au GUIEnter * call HiGUIreset()
   # For vim-tene, in the GUI make the himod text darkorange / orange
   au GUIEnter * call TeneHimod()
-  au ColorScheme *:default call HiDefaultGUIreset()
+  au ColorScheme * call HiGUIreset()
   # ... and ensure it's reapplied to the right place (be it guibg or guifg)
   # when the colorscheme changes
   au ColorScheme * call TeneHimod()

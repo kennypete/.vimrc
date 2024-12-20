@@ -218,7 +218,7 @@ silent execute has('mouse') ? 'set mouse=ar' : ''
 silent execute has('mouse') ? 'set nomousefocus' : ''
 #   nomousehide  Don't hide mouse's cursor when something's typed (Silly, IMO)
 silent execute has('mouse') ? 'set nomousehide' : ''
-#   numberwidth  Default to 3, but use g:VimrcSetNumberWidth() and au to alt
+#   numberwidth  Default to 3, but use SetNumberWidth() and au to alt
 set numberwidth=3
 # set operatorfunc  This defined in xnoremap <F8>, below
 #   printfont  This prints optimally on my HP LaserJet Pro M148
@@ -365,29 +365,84 @@ set nowrap
 # }}}
 # 04 Commands {{{
 # B (Goes to first instance of a window of {buffer number} in _any_ tab {{{2
-command! -nargs=1 -complete=command B
-      \ silent execute ':call g:VimrcGoToBufferInTab(' .. <f-args> .. ')'
+command! -nargs=1 -complete=command B {
+  var c: number = tabpagenr()
+  var f: bool = false
+  for t in range(tabpagenr('$'))
+    execute ':norm ' .. (t + 1) .. 'gt'
+    for w in range(1, winnr('$'))
+      if winbufnr(w) == str2nr(trim(<q-args>))
+        execute ':' .. w .. 'wincmd w'
+        f = true
+        break
+      endif
+    endfor
+    if f
+      break
+    endif
+  endfor
+  if !f
+    execute ':norm ' .. c .. 'gt'
+    echo "Buffer not found in any window."
+  endif
+}
+#command! -nargs=1 -complete=command B
+#      \ silent execute ':call g:VimrcGoToBufferInTab(' .. <f-args> .. ')'
 # 2}}}
-# Bod {num}? (Deletes all buffers bar %/{num}) {{{2
-command! -nargs=? -complete=command Bod
-      \ silent execute ':call g:VimrcBufferOnlyDelete(' .. <q-args> .. ')'
+# Bod {num}? (Deletes all buffers except % or specified {num}) {{{2
+command! -nargs=? -complete=command Bod {
+  var k: number = str2nr(<q-args>) == -1 ? bufnr() : str2nr(<q-args>)
+  var n: number = bufnr('$')
+  silent! execute 'b' k
+  for b in range(n, 1, -1)
+    if bufnr(b) != -1
+      if bufnr(b) != k
+        silent! execute 'bdelete!' b
+      endif
+    endif
+  endfor
+}
 # 2}}}
-# Bow {num}? (Wipes out all buffers bar %/{num}) {{{2
-command! -nargs=? -complete=command Bow
-      \ silent execute ':call g:VimrcBufferOnlyWipeout(' .. <q-args> .. ')'
+# Bow {num}? (Wipes out all buffers except % or specified {num}) {{{2
+command! -nargs=? -complete=command Bow {
+  var k: number = str2nr(<q-args>) == -1 ? bufnr() : str2nr(<q-args>)
+  var n: number = bufnr('$')
+  # Ensure the buffer is not hidden, otherwise the buffer list is buggered
+  silent! execute 'b' k
+  for b in range(n, 1, -1)
+    if bufnr(b) != -1
+      if bufnr(b) != k
+        silent! execute 'bwipeout!' b
+      endif
+    endif
+  endfor
+}
 # 2}}}
 # DiffOrig (Displays a diff between the buffer and the file loaded) {{{2
-if !exists(":DiffOrig")
-  command DiffOrig vert new | set bt=nofile | r ++edit #
-  \ | 0d_ | diffthis | wincmd p | diffthis
-endif
+# A vim9script rendition of, and easier to follow, DiffOrig:
+command! DiffOrig {
+  var orig_file: string = expand('%:p')
+  if empty(orig_file)
+    echoerr 'No file name for the current buffer'
+  else
+    vnew
+    setlocal buftype=nofile
+    try
+      execute 'read ++edit ' .. orig_file
+    catch
+      echoerr 'Failed reading the original file'
+    finally
+      :0delete _
+      diffthis
+      wincmd p
+      diffthis
+    endtry
+  endif
+}
 # 2}}}
-# LL [and Global] (Location list for {word}) {{{2
-# Using LL as a mnemonic for Location List {word}
-command! -bang -nargs=1 -range=% Global
-      \ g:VimrcGlobal(<line1>, <line2>, <q-args>, expand('<bang>'))
-command! -bang -nargs=1 -range=% LL
-      \ g:VimrcGlobal(<line1>, <line2>, <q-args>, expand('<bang>'))
+# LLP (Location list for {pattern}) {{{2
+command! -bang -nargs=1 -range=% LLP
+      \ LocationListPat(<line1>, <line2>, <q-args>, expand('<bang>'))
 # 2}}}
 # GenerateUnicode (Generate a Unicode table between two nnnn of U+nnnn) {{{2
 # Usage example:
@@ -413,36 +468,7 @@ command! -nargs=+ -complete=command Redirr redir @p
 # 2}}}
 # }}}
 # 05 Functions {{{
-# g:VimrcBufferOnlyDelete (Deletes all bar % or {num} if specified) {{{2
-def! g:VimrcBufferOnlyDelete(keepbuffer: number = -1): void
-  var k = (keepbuffer == -1 ? bufnr() : keepbuffer)
-  var n = bufnr('$')
-  silent! execute 'b' k
-  for b in range(n, 1, -1)
-    if bufnr(b) != -1
-      if bufnr(b) != k
-        silent! execute 'bdelete!' b
-      endif
-    endif
-  endfor
-enddef
-# 2}}}
-# g:VimrcBufferOnlyWipeout (Wipes out all buffers bar % or {num}) {{{2
-def! g:VimrcBufferOnlyWipeout(keepbuffer: number = -1): void
-  var k = (keepbuffer == -1 ? bufnr() : keepbuffer)
-  var n = bufnr('$')
-  # Ensure the buffer is not hidden, otherwise the buffer list is buggered
-  silent! execute 'b' k
-  for b in range(n, 1, -1)
-    if bufnr(b) != -1
-      if bufnr(b) != k
-        silent! execute 'bwipeout!' b
-      endif
-    endif
-  endfor
-enddef
-# 2}}}
-# g:VimrcColoursConsoleReset (Resets colours when back to Default) {{{2
+# ColoursConsoleReset (Resets colours when back to Default) {{{2
 # NB: 1. Console only (for GUI refer _gvimrc)
 #     2. Presumes using defaults for terminal (e.g., PowerShell = Campbell)
 # The colours here are for just a few distinct key highlights like the line
@@ -454,7 +480,7 @@ enddef
 # low impact (using default colorscheme only, and tweaking from there in all
 # variants) PLUS considering vim-tene, which re-uses some of the in-built
 # highlight groups, so some need slight tweaking.
-def! g:VimrcColoursConsoleReset(): void
+def ColoursConsoleReset(): void
   # default colorscheme overrides (they persist until the colorscheme changes)
   if !has("gui_running")
     if g:colors_name == "default"
@@ -485,8 +511,8 @@ def! g:VimrcColoursConsoleReset(): void
   endif
 enddef
 # }}}
-# g:VimrcCycleVirtualEdit (Cycle virtualedit local setting) {{{2
-def! g:VimrcCycleVirtualEdit()
+# CycleVirtualEdit (Cycle virtualedit local setting) {{{2
+def CycleVirtualEdit(): void
   if &virtualedit == "all"
     set virtualedit=block
   elseif &virtualedit == "block"
@@ -501,22 +527,15 @@ def! g:VimrcCycleVirtualEdit()
   endif
 enddef
 # 2}}}
-# g:VimrcGenerateUnicode (Generate Unicode Characters Table) {{{2
-# NB: first and last are decimal values so, e.g, 162 is hexadecimal A2
-def! g:VimrcGenerateUnicode(first: number, last: number): void
-  var i = first
-  while i <= last
-    @c = printf('%04X ', i) .. '	'
-    for j in range(16)
-      @c = @c .. ' ' .. nr2char(i)
-      i += 1
-    endfor
-    put c
-  endwhile
+# LastCursorPos (Go to the last cursor position) {{{2
+def LastCursorPos(): void
+  if line("'\"") >= 1 && line("'\"") <= line("$") && &ft !~# 'commit'
+    execute "normal! g`\""
+  endif
 enddef
 # 2}}}
-# g:VimrcGlobal (Global command to populate location list) {{{2
-def! g:VimrcGlobal(line1: number, line2: number, pat: string,
+# LocationListPat (Populates the location list for {pat} in the buffer) {{{2
+def LocationListPat(line1: number, line2: number, pat: string,
     bang: string): void
   var operator = bang == '!' ? '!~' : '=~'
   var padding_top = line1 > 1 ? line1 - 1 : 0
@@ -539,30 +558,21 @@ def! g:VimrcGlobal(line1: number, line2: number, pat: string,
     lfirst
     wincmd p
   endif
-  # Create a global mapping for <S-Enter>, conditional on the previous
-  # window being a quickfix or location list
-  nnoremap <expr> <S-Enter> getwinvar(winnr(), '&buftype') ==# 'quickfix' ?
-        \ "\<Enter>\<C-w>p" : "\<Enter>"
 enddef
 # 2}}}
-# g:VimrcGoToBufferInTab (Go to buffer number in _any_ tab) {{{2
-def! g:VimrcGoToBufferInTab(b: number): void
-  var c = tabpagenr()
-  for t in range(tabpagenr('$'))
-    execute ':norm ' .. (t + 1) .. 'gt'
-    for w in range(1, winnr('$'))
-      if winbufnr(w) == b
-        execute ':' .. w .. 'wincmd w'
-        return
-      endif
-    endfor
-  endfor
-  execute ':norm ' .. c .. 'gt'
-  echo "Buffer not found in any window."
+# NmapShiftEnter (Used only by mapping nnoremap <S-Enter>) {{{2
+def NmapShiftEnter(): void
+  const W: string = getwinvar(winnr(), '&buftype')
+  if W ==# 'quickfix'
+    silent! execute "norm! \<Enter>"
+    silent! execute "norm! \<C-W>p"  # return to the quickfix list
+  else
+    silent! execute "norm! \<C-F>"  # behave like the default
+  endif
 enddef
 # 2}}}
-# g:VimrcPackadd (try & catch packadd! a plugin; echo a msg if it fails) {{{2
-def! g:VimrcPackAdd(aplugin: string): void
+# PackAdd (try & catch packadd! a plugin; echo a msg if it fails) {{{2
+def PackAdd(aplugin: string): void
   try
     # This must use execute, not just packadd! because of passing the arg
     execute "packadd! " .. aplugin
@@ -571,35 +581,32 @@ def! g:VimrcPackAdd(aplugin: string): void
   endtry
 enddef
 # 2}}}
-# g:VimrcPopupModeCode (Generate a popup notification with the mode code) {{{2
-# Makes a popup notification with the current mode and state - for debugging
-def! g:VimrcPopupModeCode(): void
-  popup_notification(mode(1) .. state(), {time: 555})
+# PopupModeCode (Generate a popup notification with the mode+state) {{{2
+def PopupModeCode(): void
+  popup_notification(mode(1) .. state(), {time: 1200})
 enddef
 # 2}}}
-# g:VimrcSetNumberWidth (Set numberwidth in line with lines in the buffer {{{2
-def! g:VimrcSetNumberWidth(): void
+# SetNumberWidth (Set numberwidth in line with lines in the buffer {{{2
+def SetNumberWidth(): void
   var num_lines = line('$')
   var new_width = len(num_lines) + 2
   execute 'set numberwidth=' .. new_width
 enddef
 # 2}}}
-# g:VimrcToggleComment (Toggle code commenting of selected/current line) {{{2
-g:comment_map = {"python": '#', "sh": '#', "bat": 'REM', "vbs": "'",
-\ "omnimark": ";", "vim": '#'}
-def! g:VimrcToggleComment(): void
-  if has_key(g:comment_map, &filetype)
-    var comment_leader = g:comment_map[&filetype]
-    if getline('.') =~ "^\\s*" .. comment_leader .. " "
-      # Uncomment the line
-      execute "silent s/^\\(\\s*\\)" .. comment_leader .. " /\\1/"
+# ToggleComment (Toggle code commenting of selected/current line) {{{2
+const COMMENT = {'python': '#', 'sh': '#', 'bat': 'REM', 'vbs': "'",
+  'omnimark': ';', 'vim': '#', 'json': '\/\/', 'js': '\/\/',
+  'c': '\/\/', 'go': '\/\/'}
+def ToggleComment(): void
+  if has_key(COMMENT, &filetype)
+    const COMMENTCHAR = COMMENT[&filetype]
+    if getline('.') =~ "^\\s*" .. COMMENTCHAR .. " "  # Uncomment the line
+      execute "silent s/^\\(\\s*\\)" .. COMMENTCHAR .. " /\\1/"
     else
-      if getline('.') =~ "^\\s*" .. comment_leader
-        # Uncomment the line
-        execute "silent s/^\\(\\s*\\)" .. comment_leader .. "/\\1/"
-      else
-        # Comment the line
-        execute "silent s/^\\(\\s*\\)/\\1" .. comment_leader .. " /"
+      if getline('.') =~ "^\\s*" .. COMMENTCHAR  # Uncomment the line
+        execute "silent s/^\\(\\s*\\)" .. COMMENTCHAR .. "/\\1/"
+      else  # Comment the line
+        execute "silent s/^\\(\\s*\\)/\\1" .. COMMENTCHAR .. " /"
       endif
     endif
   else
@@ -607,8 +614,8 @@ def! g:VimrcToggleComment(): void
   endif
 enddef
 # 2}}}
-# g:VimrcToggleLineNumber (line numbers: literal > relative > none) {{{2
-def! g:VimrcToggleLineNumber(): void
+# ToggleLineNumber (line numbers: literal > relative > none) {{{2
+def ToggleLineNumber(): void
   if !&number
     set number
     set norelativenumber
@@ -620,8 +627,8 @@ def! g:VimrcToggleLineNumber(): void
   endif
 enddef
 # 2}}}
-# g:VimrcWindowWrapToggle (Toggle current window wrapping) {{{2
-def! g:VimrcWindowWrapToggle(): void
+# WindowWrapToggle (Toggle current window wrapping) {{{2
+def WindowWrapToggle(): void
   if &wrap == v:false
     set wrap
   else
@@ -629,8 +636,8 @@ def! g:VimrcWindowWrapToggle(): void
   endif
 enddef
 # 2}}}
-# g:VimrcXfceCustomCursorBlock (XFCE cursor shapes BLOCK) {{{2
-def! g:VimrcXfceCustomCursorBlock(): void
+# XfceCustomCursorBlock (XFCE cursor shapes BLOCK) {{{2
+def XfceCustomCursorBlock(): void
   if isdirectory('~/.config/xfce4')
     if filewritable('~/.config/xfce4/terminal/terminalrc')
         silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_IBEAM/TERMINAL_CURSOR_SHAPE_BLOCK/' ~/.config/xfce4/terminal/terminalrc"
@@ -638,8 +645,8 @@ def! g:VimrcXfceCustomCursorBlock(): void
   endif
 enddef
 # 2}}}
-# g:VimrcXfceCustomCursorIbeam (XFCE cursor shapes IBEAM) {{{2
-def! g:VimrcXfceCustomCursorIbeam(): void
+# XfceCustomCursorIbeam (XFCE cursor shapes IBEAM) {{{2
+def XfceCustomCursorIbeam(): void
   if isdirectory('~/.config/xfce4')
     if filewritable('~/.config/xfce4/terminal/terminalrc')
       silent execute "!sed -i.bak -e 's/TERMINAL_CURSOR_SHAPE_BLOCK/TERMINAL_CURSOR_SHAPE_IBEAM/' ~/.config/xfce4/terminal/terminalrc"
@@ -647,9 +654,23 @@ def! g:VimrcXfceCustomCursorIbeam(): void
   endif
 enddef
 # 2}}}
+# Um? ... g:VimrcGenerateUnicode (Generate Unicode Characters Table) {{{2
+# NB: first and last are decimal values so, e.g, 162 is hexadecimal A2
+def! g:VimrcGenerateUnicode(first: number, last: number): void
+  var i = first
+  while i <= last
+    @c = printf('%04X ', i) .. '	'
+    for j in range(16)
+      @c = @c .. ' ' .. nr2char(i)
+      i += 1
+    endfor
+    put c
+  endwhile
+enddef
+# 2}}}
 # }}}
 # 06 Mappings {{{
-#  <Space> to <Leader> - remapped in Normal mode {{{2
+#  <Space> as <Leader> {{{2
 #  Must be set before the mappings that use <Leader>, otherwise <Space> will
 #  be literal (i.e., [count] characters to the right)
 nnoremap <Space> <Nop>
@@ -657,14 +678,13 @@ nnoremap <Space> <Nop>
 g:mapleader = ' '
 # 2}}}
 #  [nore]map — Normal, Visual, Operator Pending modes mappings {{{2
-noremap <Leader>v :call g:VimrcCycleVirtualEdit()<CR>
-noremap <Leader>w :call g:VimrcWindowWrapToggle()<CR>
-noremap <silent><Leader>i :exe "set colorcolumn=80 <bar> set textwidth=78"<CR>
-noremap <silent><Leader>I :exe "set colorcolumn=0 <bar> set textwidth=0"<CR>
-noremap <silent><Leader>l :call g:VimrcToggleLineNumber()<CR>
-noremap <silent><Leader>c :call g:VimrcToggleComment()<CR>
-# vim9-popped - noremap <silent><Leader>b :CpopupBuffersMenu buffers<CR>
-# vim9-popped - noremap <silent><Leader>b :CpopupBuffersMenu buffers!<CR>
+noremap <silent><Leader>c <ScriptCmd>ToggleComment()<CR>
+noremap <Leader>i <Cmd>exe "set colorcolumn=80 <bar> set textwidth=78"<CR>
+noremap <Leader>I <Cmd>exe "set colorcolumn=0 <bar> set textwidth=0"<CR>
+noremap <silent><Leader>l <ScriptCmd>ToggleLineNumber()<CR>
+noremap <silent><Leader>m <ScriptCmd>PopupModeCode()<CR>
+noremap <Leader>v <ScriptCmd>CycleVirtualEdit()<CR>
+noremap <silent><Leader>w <ScriptCmd>WindowWrapToggle()<CR>
 # 2}}}
 # c[nore]map - Command-line mode only mappings {{{2
 cnoremap <C-L> :exe "redrawstatus"<CR>
@@ -672,23 +692,25 @@ cnoremap <C-L> :exe "redrawstatus"<CR>
 # i[nore]map — Insert mode only mappings {{{2
 # Bram recommended undo atom
 inoremap <C-U> <C-G>u<C-U>
-# Enter a 	 with <S-Tab>
-inoremap <S-Tab> <C-V><Tab>
+# Enter U+0009 with <S-Tab>
+inoremap <S-Tab> <C-Q><Tab>
 # 2}}}
 # n[nore]map — Normal mode only mappings {{{2
 # Make entering digraphs from Normal mode easier, using <C-k>
 nnoremap <C-K> a<C-K>
 # Redraw the screen AND turn search highlighting off with <C-L>
-nnoremap <C-L> :nohl<CR><C-L>
+nnoremap <C-L> <Cmd>nohl<CR><C-L>
 # Use <C-S> for a su "template", with very no magic and _ delimiters.
 #   (Using silent execute enables a | to add a # Comment, if wanted.)
 silent execute 'nnoremap <C-S> :%s_\v__gc<Left><Left><Left>'
 # <Tab> to go to the next tab page, <S-Tab> the previous tab page
-nnoremap <silent> <Tab> :tabnext<CR>
-nnoremap <silent> <S-Tab> :tabprevious<CR>
+nnoremap <silent> <Tab> <Cmd>tabnext<CR>
+nnoremap <silent> <S-Tab> <Cmd>tabprevious<CR>
 # <F12> to toggle showing the menu - F12 is Lower-M on my Planck keyboard!
-nnoremap <F12> :let &go = &go =~# 'm' ?
+nnoremap <silent> <F12> <Cmd>let &go = &go =~# 'm' ?
 \ substitute(&go, 'm', '', '') : &go .. 'm'<CR>
+# Shift-Enter in Normal mode to return to a quickfix list automatically
+nnoremap <S-Enter> <ScriptCmd>NmapShiftEnter()<CR>
 # Other:
 # - Toggle 'rendereroptions' needs GUI, Win32/Win64, and DirectX so -> _gvimrc
 # - vim-popped plugin mapping, gA, is an omnibus ga/g8/etc. command
@@ -765,10 +787,10 @@ if &term =~ '[bw]'
   augroup END
 endif
 # 2}}}
-# 07.20 VimrcSetNumberWidth() on entering a buffer {{{2
+# 07.20 SetNumberWidth() on entering a buffer {{{2
 augroup triggersetnumberwidth
   autocmd!
-  autocmd BufEnter * g:VimrcSetNumberWidth()
+  autocmd BufEnter * SetNumberWidth()
 augroup END
 # 2}}}
 # 07.30 skeletons (templates) {{{2
@@ -788,17 +810,14 @@ augroup vimStartup
   # Don't do it when the position is invalid, when inside an event handler
   # (happens when dropping a file on gvim) and for a commit message (it's
   # likely a different one than last time).
-  autocmd BufReadPost *
-    \ if line("'\"") >= 1 && line("'\"") <= line("$") && &ft !~# 'commit'
-    \ |   exe "normal! g`\""
-    \ | endif
+  autocmd BufReadPost * vim9cmd LastCursorPos()
 augroup END
 # 2}}}
 # 07.50 colorschemes {{{2
 # Define the autocmd for when a colorscheme is changed
 augroup vimrc-ColorScheme
   autocmd!
-  autocmd ColorScheme * call g:VimrcColoursConsoleReset()
+  autocmd ColorScheme * call ColoursConsoleReset()
 augroup END
 # 2}}}
 # 09.60 [Suppressed] colorschemes {{{2
@@ -830,32 +849,19 @@ augroup END
 # "Y" 	https://github.com/kennypete/vim-tene
 # vim-ai - only use where vim9 and Python3 align - not using - commented out
 #if v:versionlong >= 9001499
-#  g:VimrcPackAdd('vim-ai')
+#  PackAdd('vim-ai')
 #endif
 g:asciidoctor_allow_uri_read = " -a allow-uri-read"
-g:VimrcPackAdd("vim-asciidoctor")
-# g:champ_percent = false
-# g:champ_pairs = false
-# g:champ_html5 = false
-# g:champ_digraphs = false
-# g:champ_octal = false
-# g:champ_Ugc = false
-# g:champ_Uccc = false
-# g:champ_Ubc = false
-# g:champ_Udm = false
-# g:champ_Unv = false
-# g:champ_emojis = false
-# g:champ_nmap_ga = false
-g:VimrcPackAdd("vim9-champ")
+PackAdd("vim-asciidoctor")
+PackAdd("vim9-um")
 #nnoremap <Leader>ga <Nop>
 #nnoremap <Leader>d <Plug>ChampPopup;
-#nnoremap <Leader>m <Plug>Champ;
 #nmap <Leader>gp <Plug>ChampPopup;
-# g:VimrcPackAdd("vim-characterize") TEMP COMMENTED OUT
-# g:VimrcPackAdd("vim-combining2")
+# PackAdd("vim-characterize") # TEMP COMMENTED OUT
+PackAdd("vim-combining2")
 g:borderchars = ['', ' ', '', ' ', '', '', '', '']
-g:VimrcPackAdd("vim-popped")
-g:VimrcPackAdd("vim-sents")
+PackAdd("vim-popped")
+PackAdd("vim-sents")
 # vim-tene (my own highly configurable and flexible statusline)
 try
   # Create the g:tene_ga dictionary, if necessary
@@ -892,6 +898,8 @@ try
   g:tene_modestate = 1
   # Always show the window number (after the buffer number)
   g:tene_window_num = 1
+  # Uncomment to highlight the modified indicator
+  # g:tene_himod = 1
   packadd! vim-tene
 # But, if vim-tene is unavailable or fails, create a basic statusline
 catch
