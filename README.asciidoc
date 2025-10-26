@@ -1,42 +1,46 @@
-= My .vimrc (and .gvimrc)
+= My .vimrc and .gvimrc
 
-== vim9script
+== Vim9 script
 
-I rebuilt my `.vimrc` and `.gvimrc` as vim9script in July/August 2023.  That
+I rebuilt my `.vimrc` and `.gvimrc` as Vim9 script in July/August 2023.  That
 was a valuable exercise because it helped me purge unused things.
-It also de-cluttered because I’d made the vimscript version handle all sorts
-of versions before vim9, all the way back to 7.x (which is now deprecated,
-though still handled in the `&#x5F;vimrc8` and `&#x5F;gvimrc8` files).
+It also de-cluttered because I’d made the Vim script version handle all sorts
+things back to 7.x (which is now deprecated, though still handled in
+the `&#x5F;vimrc8` and `&#x5F;gvimrc8` files).
 
 == Structure
 
-With vim9script allowing an initial vimscript section, the approach taken is
-to have the `.vimrc` only source `&#x5F;vimrc8` and `&#x5F;gvimrc8` (if using
-the GUI) when the version is before 8.2.3434.
+NOTE: With Vim9 script allowing an initial Vim script section (vim9-mix), the
+2023 approach was to have the `.vimrc` only source `.vimrc8` and, if
+applicable, `.gvimrc8` when the version was before 8.2.3434.  That has been
+discontinued now that it is very rare to need to use versions before that.
 
-If the version is 9 (or 8.2.3434 onwards, where vim9script works adequately)
-the `.vimrc`, or `&#x5F;vimrc`, is used.  Those files are identical.
-(Similarly, the `.gvimrc` or `&#x5F;gvimrc`.)  So, this is what happens:
+For version 9 (or 8.2.3434 onwards, where Vim9 script works adequately
+for `.vimrc` purposes) the applicable files are `.vimrc` and `.gvimrc`.
+They have been designed to work in Windows 11, WSL Debian, and Debian 13,
+with renaming `_vimrc` and `_gvimrc` when used with Windows 11.
 
 [cols="1,1,1"]
 |===
-|Version and patch |Loads (all) | Loads (GUI)
+|Version and patch |Use | Loads (GUI)
 
-|*gvim* 900 or >=802 patch 3434 | _vimrc | _gvimrc
-|*gvim* <802 patch 3434 | _vimrc8 (sourced by _vimrc) | _gvimrc8 (sourced by
-_vimrc)
-|*vim* 900 or >=802 patch 3434 | _vimrc | 
-|*vim* <802 patch 3434 | _vimrc8 (sourced by _vimrc) | 
+|*gVim* 900 or >=802 patch 3434 | .vimrc | .gvimrc
+|*vim* 900 or >=802 patch 3434 | .vimrc | 
+|*gVim* <802 patch 3434 | _vimrc8 | _gvimrc8
+|*vim* <802 patch 3434 | _vimrc8 | 
 |===
 
 [NOTE]
-To repeat, .vimrc and .gvimrc are **clones** of _vimrc and _gvimrc respectively.
-They may be used by Linux, WSL, etc., but it's just as straightforward to make
-a symbolic link to the `_` versions, which has the added advantage of showing
-up with a normal `ls` or `ls -l`.
+To use versions &lt;8.2.3434, rename the `&#x5F;vimrc8` and `&#x5F;.gvimrc8`
+by removing the `8`.  If need be, rename the `&#x5F;vimrc` and `&#x5F;gvimrc`
+by appending a `9` first.
 
-There are only a few things in the vim9script `_vimrc` that are not compatible
-with versions before the version 9.0.x.  However, it is possible
+The files may be used by Linux and WSL and, because the `.` files have been
+built for either Windows or Linux/WSL, a symbolic link either from or to
+the `.` versions works well.
+
+There are only a few things in the Vim9 script `.vimrc` that are not
+compatible with versions before the version 9.0.x.  However, it is possible
 to utilise features in later versions as they come up.  In those instances it
 is necessary to make those only called with a `v:versionlong` conditional
 test.  An example is the option `cdhome`, which was not available until
@@ -49,55 +53,40 @@ if v:versionlong >= 8023780
 endif
 ----
 
-== Linux
+If the GUI is not needed, using `.vimrc` directly in the `$HOME`
+directory is the simplest approach.  For example, if using Windows Git
+Bash, just use the `.vimrc` as-is.
 
-If the GUI is not needed, using .vimrc and .vimrc8 (if necessary) directly
-in the `$HOME` directory is the simplest approach.
+There are some _conditional_ sections to handle the differences, though
+those are mostly around display.
 
-Alternatively, Vim will read a `.vimrc` symbolic link, so another means to
-ensure a clean local repository is to have a `~/vimrc` folder (i.e., in the
-same location as the `.vimrc` used by Vim).  That also allows for a clean
-cloned git repository and for easy updating back to github.  If the GUI is
-used, similarly, have a symbolic link to `~/vimrc` folder and have the
-`.gvimrc` in there too.
+== GUI - Windows and gtk-3
 
-== Windows
-
-The `&#x5F;vimrc` is a clone of the `.vimrc`; there is nothing in either that
-is incompatible with the other operating system.  That is, everything
-should work in Windows and Linux (or WSL) and vice versa.
-
-There are some _conditional_ sections to handle the differences, though those
-are mostly around display.
-
-== GUI
-
-The GUI is applicable to both operating systems.  From 2023-07-15,
-I separated _most_ of the GUI-specific things into a `.gvimrc` /
-`&#x5F;gvimrc` - this was driven by making a specific Toolbar for gvim.
+From 2023-07-15, I separated _most_ of the GUI-specific things
+into `.gvimrc`, which was driven by making a specific Toolbar for gVim.
 It is also the recommended way of keeping GUI-related settings distinct.
-This has grown a bit but it is still nowhere near as large as the `.vimrc`,
-which makes sense.
+This has grown further, but it is still nowhere near as large as
+the `.vimrc`.
 
 One consideration around this is the order of loading of plugins.  Reviewing
 output of `--startuptime`, the following is seen, in this order:
 
 * The `ftdetect` folder-containing plugins (e.g., in vim-asciidoctor)
-sourced by _vimrc are loaded first along with other `vim90` folder .vim
-files (e.g., syntax.vim)
-* The `$HOME\_vimrc` is next, which is followed by its packadd `\opt`
+sourced by _vimrc are loaded first along with other `vim91` folder `.vim`
+files (e.g., `syntax.vim`)
+* The `$HOME\.vimrc` is next, which is followed by its packadd `\opt`
 folder plugins.
-* Other `vim90` folder plugins are next (e.g., netrwPlugin.vim).
-* The `$HOME\_gvimrc` is almost last, sourced just before the GUI starts.
+* Other `vim91` folder plugins are next (e.g., `netrwPlugin.vim`).
+* The `$HOME\.gvimrc` is almost last, sourced just before the GUI starts.
 
-What this means is that setting things in the `$HOME\_gvimrc` needs to
+What this means is that setting things in the `$HOME\.gvimrc` needs to
 be considered in the context of the things that could impact that which
 have already been loaded.  For example, a lot of mappings have been made
-by the time the `_gvimrc` is sourced.
+by the time the `.gvimrc` is sourced.
 
 == Sections
 
-The `.vimrc` / `&#x5F;vimrc` is split into sections:
+The `.vimrc` is split into sections:
 
 [horizontal]
 01:: Windows, WSL specific options
@@ -109,8 +98,9 @@ The `.vimrc` / `&#x5F;vimrc` is split into sections:
 07:: Autocommands
 08:: Plugins
 09:: Syntax + filetype
+10:: Cmdline completion
 88:: Deleted
 98:: Development
 
-The `.gvimrc` / `&#x5F;gvimrc` are similarly structured.
+The `.gvimrc` is structured similarly.
 

@@ -1,15 +1,14 @@
 " .gvimrc / _gvimrc
 " 01 Windows, WSL, GUI options {{{
 " GUI toolbar
-if has("toolbar") &&
-      \ (v:version > 704 || (v:version == 704 && has('patch2015')))
+if has("toolbar") && (v:version > 704 || (v:version == 704 && has('patch2015')))
   if len(split(execute('amenu ToolBar'), '\n')) > 0
     silent! aunmenu ToolBar
   endif
   anoremenu 1.10 ToolBar.Open :browse confirm e<CR>
   tmenu ToolBar.Open Open file
-  anoremenu 1.20 ToolBar.Mks :execute "browse mksession! "
-        \ .. strftime("%Y-%m-%d")<CR>
+  anoremenu 1.20 ToolBar.Mks :execute "browse mksession! " ..
+        \ strftime("%Y-%m-%d")<CR>
   tmenu ToolBar.Mks Save current session
   anoremenu 1.30 ToolBar.Run :browse source<CR>
   tmenu ToolBar.Run Run a Vim Script / Load a session
@@ -43,9 +42,7 @@ if has("toolbar") &&
   anoremenu <silent> 1.110 ToolBar.SpellNext ]s
   tmenu ToolBar.SpellNext Next misspelled word
   anoremenu 1.115 ToolBar.-sep4- <Nop>
-  anoremenu 1.120 ToolBar.Menu :execute
-        \ "if &guioptions=~'m' \| set guioptions-=m \| else \|" ..
-        \ " set guioptions+=m \| endif"<CR>
+  anoremenu 1.120 ToolBar.Menu :execute "call g:ToolBarMenuOm()"<CR>
   tmenu ToolBar.Menu Toggle menu
 endif
 
@@ -123,6 +120,8 @@ set titlestring=%{expand(\"%:p\")}\ %{&modified&&&buftype!='terminal'?'\ +':''}%
 function g:ColoursGUIreset()
   " default colorscheme overrides (they persist until the colorscheme changes)
   if g:colors_name == "default"
+    " testing, but only when supported by version!
+    " popup_notification("ColoursConsoleReset", {time: 2000})
     " line numbers
     highlight LineNr guifg=Grey
     " the line number of the active cursor
@@ -139,6 +138,13 @@ function g:ColoursGUIreset()
     highlight StatusLineNC guifg=Black guibg=Grey gui=NONE
   else
     " Do nothing special - only use default!
+  endif
+endfunction
+function g:ToolBarMenuOm()
+  if &guioptions=~'m'
+    set guioptions-=m
+  else
+    set guioptions+=m
   endif
 endfunction
 " }}}

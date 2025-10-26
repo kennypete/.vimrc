@@ -1,27 +1,18 @@
 " .vimrc _vimrc - vim9mix - refer :h vim9mix
+" If the version is before 8.2.3434, warn and finish in either a popup or
+" if before 8.1.1705, echo (which generates a dialog box in gVim)
 if (v:version < 802 || (v:version == 802 && !has('patch3434')))
-  " -------------------------------------------------------------------------
-  " If the version is before 8.2.3434 use vimscripts _vimrc8 and _gvimrc8
-  " rather than this vim9script .vimrc/_vimrc (and .gvimrc/_gvimrc)
-  " A few things do not work with versions 8.2.3434 and 9.0.1677 - those are
-  " handed inline, e.g., in the 'fillchars' option, item lastline
-  try
-    " -----------------------------------------------------------------------
-    " Use :source as this works whereas :runtime does not (in this instance)
-    " -----------------------------------------------------------------------
-    source $HOME/_vimrc8
-    if has("gui_running")
-      source $HOME/_gvimrc8
-    endif
-  catch
-    echom "There was an error while sourcing _vimrc8 / _gvimrc8"
-  endtry
+  if (v:version < 801 || (v:version == 801 && !has('patch1705')))
+    echo "No Vim9 script: Use -u & _vimrc8"
+  else
+    call popup_notification("No Vim9 script: Use -u & _vimrc8", #{time: 8000})
+  endif
   finish
 endif
 vim9script
-# 01 Windows, WSL specific options {{{
+# 01 Windows, WSL specific options {{{1
 # Windows, instead of '~/.vimrc', has '~\_vimrc'.
-# Gvim: using a .gvimrc / _gvimrc, despite being two separate files,
+# gVim: using a .gvimrc / _gvimrc, despite being two separate files,
 # is the recommended approach.  It is particularly useful for separating
 # GUI-only things, like customising the GUI Toolbar.
 #
@@ -69,8 +60,7 @@ else
     silent! call mkdir($HOME .. '/.vim/view', 'p')
   endif
 endif
-# }}}
-# 02 Highlights {{{
+# 02 Highlights {{{1
 # There are not a lot of .vimrc highlights because I accept defaults for many
 # things.  I used to set these up here, but now use a function and a
 # combination of autocommand groups and a one-off setup at the end of either
@@ -89,8 +79,7 @@ if !has("gui_running")
 else
   # Set things in _gvimrc since this is specific to the GUI
 endif
-# }}}
-# 03 Settings (global) {{{
+# 03 Settings (global) {{{1
 # Vim can be run with "-u NONE" if you do not want to load a vimrc.
 # Individual settings can be reverted with ":set {option}&" in most cases, so
 # for example, ":set colorcolumn&" will remove the column indicator (if set).
@@ -207,7 +196,10 @@ set laststatus=2
 #   list  Shows <Tab>, <EOL>, etc., visually: see listchars for which ones
 set list
 #   listchars  Highlight them, and character(s) used for U+00A0, U+0009, et al
+#   - for FiraCode
 set listchars=nbsp:°,trail:·,tab:——►,eol:¶
+#   - for 0xProto or RobertoMono
+#set listchars=nbsp:°,trail:·,tab:──,eol:¶
 #   matchpairs  Pairs highlighted vimSetEqual when a start/end one is selected
 set matchpairs=(:),{:},[:],“:”,‘:’
 #   maxcombine  Set to maximum combining; e.g., किँ is U+0915,U+093F,U+0901
@@ -234,11 +226,12 @@ set pumwidth=18
 # set renderoptions is in _gvimrc (needs GUI, Windows, _and_ DIRECTX)
 #   report  Report the # of lines changed _always_, not only when >2 (default)
 set report=0
-# set ruler, rulerformat = n/a: I use a statusline, vim-tene - refer :h ruler
+# set ruler, rulerformat = n/a: use vim-zline (or vim-tene) - refer :h ruler
 #   scrolloff  Keep 0 lines above/below cursor; 999 stays in window's middle
 set scrolloff=0
-#   sessionoptions  Self-evident things that get saved with :mksession
-set sessionoptions=buffers,curdir,globals,folds,help,options,tabpages,winsize
+#   sessionoptions  Things that get saved with :mksession
+#   [Omitted are curdir and sesdir, because they are not needed with autochdir]
+set sessionoptions=blank,buffers,folds,globals,help,localoptions,options,resize,tabpages,terminal,winsize
 # set shell=pwsh
 # set shell  Keep defaults.  If in Windows use PowerShell if wanted _in cmd_
 #   shiftwidth  Number of spaces for each autoindent/tab press
@@ -266,12 +259,12 @@ if v:versionlong >= 9001677
   set smoothscroll
 endif
 #   softtabstop  No tabs+spaces!  Use <C-v><Tab> for 	.  (Local; global-ish)
-set softtabstop=0
+# COMMENTED 20250804 set softtabstop=0
 #   splitbelow  New split goes below rather than above (personal preference)
 set splitbelow
 #   startofline  Move not just to first non-blank on a line after G, M, etc.
 set nostartofline
-# set statusline  Not a one line entry!  I use my own vim-tene plugin
+# set statusline  Not a one line entry!  Use vim-zline (or vim-tene)
 #   synmaxcol  Increase max. search cols.  (Local, but acts global/default?)
 set synmaxcol=9999
 # set tabline  Under development.  Refer _gvimrc for guitablabel too
@@ -286,7 +279,7 @@ set timeout timeoutlen=1500 ttimeoutlen=150
 set title
 #   titlelen  Percentage of the columns to use for the title - almost to max
 set titlelen=95
-#   titlestring  The title of the window (gvim, vim), tab (PowerShell), etc.
+#   titlestring  The title of the window (gVim, Vim), tab (PowerShell), etc.
 set titlestring=%{expand(\"%:t\")}%{&modified&&&buftype!='terminal'?',+':''}
 \%{&readonly?',RO':''}%{(!&modifiable&&mode()!=#'t')?',-':''}
 \%{&buftype=='help'?',HLP':''}\ (%{fnamemodify(expand('%:p'),':h')}) 
@@ -304,7 +297,11 @@ set wildignorecase
 #   wildmenu  Display completion matches for things like :colorscheme <Tab>
 set wildmenu
 #   wildoptions  Use a popup menu for wildmenu lists, which is nicer (IMO)
-if v:versionlong >= 8024325
+if v:versionlong >= 9010948
+  set findfunc=Find
+  set wildoptions=pum,fuzzy pumheight=12
+  set wildmode=noselect:lastused,full
+elseif v:versionlong >= 8024325
   set wildoptions=pum
 endif
 #   winheight  Minimal number of lines for the current window
@@ -349,21 +346,18 @@ set winminheight=3
 # tabpagemax; tag*; tcldlll; term*; terse; text* (r); thesaurusfunc;
 # ttimeout; titlelen; titleold; toolba*; tty*; undo*; update*; verbose;
 # verbosefile; viminfofile; visualbell; warn; weirdinvert; wildcha*;
-# wildignore; wildmode; winaltkeys; window; winheight; winminwidth;
+# wildignore; winaltkeys; window; winheight; winminwidth;
 # winptydll; winwidth; wrapscan; write*; writebackup; writedelay; xtermcodes
-# 2}}}
 # {{{2 Local settings that I want initially (usually)
 #   autoindent  This is useful if working with text files.
 set autoindent
-#   nrformats  Not Octal when applying either CTRL-A (+1) or CTRL-X (-1)
+#   nrformats  Not Octal when incrementing / decrementing with CTRL-A / CTRL-X
 set nrformats=alpha,hex,bin,unsigned
 #   number  Display line numbers (on left)
 set number
 #   nowrap  Prefer to not wrap initially - turn it on if wanted
 set nowrap
-# 2}}}
-# }}}
-# 04 Commands {{{
+# 04 Commands {{{1
 # B (Goes to first instance of a window of {buffer number} in _any_ tab {{{2
 command! -nargs=1 -complete=command B {
   var c: number = tabpagenr()
@@ -388,7 +382,6 @@ command! -nargs=1 -complete=command B {
 }
 #command! -nargs=1 -complete=command B
 #      \ silent execute ':call g:VimrcGoToBufferInTab(' .. <f-args> .. ')'
-# 2}}}
 # Bod {num}? (Deletes all buffers except % or specified {num}) {{{2
 command! -nargs=? -complete=command Bod {
   var k: number = str2nr(<q-args>) == -1 ? bufnr() : str2nr(<q-args>)
@@ -402,7 +395,6 @@ command! -nargs=? -complete=command Bod {
     endif
   endfor
 }
-# 2}}}
 # Bow {num}? (Wipes out all buffers except % or specified {num}) {{{2
 command! -nargs=? -complete=command Bow {
   var k: number = str2nr(<q-args>) == -1 ? bufnr() : str2nr(<q-args>)
@@ -417,7 +409,6 @@ command! -nargs=? -complete=command Bow {
     endif
   endfor
 }
-# 2}}}
 # DiffOrig (Displays a diff between the buffer and the file loaded) {{{2
 # A vim9script rendition of, and easier to follow, DiffOrig:
 command! DiffOrig {
@@ -439,23 +430,19 @@ command! DiffOrig {
     endtry
   endif
 }
-# 2}}}
 # LLP (Location list for {pattern}) {{{2
 command! -bang -nargs=1 -range=% LLP
       \ LocationListPat(<line1>, <line2>, <q-args>, expand('<bang>'))
-# 2}}}
 # GenerateUnicode (Generate a Unicode table between two nnnn of U+nnnn) {{{2
 # Usage example:
 # :GenerateUnicode 161, 199
 command! -nargs=+ -complete=command GenerateUnicode
       \ silent execute ':call g:VimrcGenerateUnicode(' .. <q-args> .. ')'
-# 2}}}
 # Mb and Gb (Mark/Goto a buffer that's been 'marked') {{{2
 # Mark a buffer and go to a buffer (uses :B command, above)
 g:mbuf = {}
 command! -nargs=1 -complete=command Mb g:mbuf[<q-args>] = bufnr('%')
 command! -nargs=1 -complete=command Gb execute ':B ' .. g:mbuf[<q-args>]
-# 2}}}
 # Redirr (Redirect output of a command to register p) {{{2
 # Redirects outputs of a command to the @p register
 # This means, for example, :Redirr filter /S[duh]/ command
@@ -465,9 +452,7 @@ command! -nargs=1 -complete=command Gb execute ':B ' .. g:mbuf[<q-args>]
 command! -nargs=+ -complete=command Redirr redir @p
       \ | silent execute <q-args>
       \ | redir END
-# 2}}}
-# }}}
-# 05 Functions {{{
+# 05 Functions {{{1
 # ColoursConsoleReset (Resets colours when back to Default) {{{2
 # NB: 1. Console only (for GUI refer _gvimrc)
 #     2. Presumes using defaults for terminal (e.g., PowerShell = Campbell)
@@ -478,8 +463,8 @@ command! -nargs=+ -complete=command Redirr redir @p
 # so that they re-set if a colorscheme is called, and early in the .vimrc
 # to ensure it is called if a colorscheme is.  It is kept intentionally
 # low impact (using default colorscheme only, and tweaking from there in all
-# variants) PLUS considering vim-tene, which re-uses some of the in-built
-# highlight groups, so some need slight tweaking.
+# variants) PLUS considering vim-tene/vim-zline, which re-uses some of the
+# in-built highlight groups, so some need slight tweaking.
 def ColoursConsoleReset(): void
   # default colorscheme overrides (they persist until the colorscheme changes)
   if !has("gui_running")
@@ -510,7 +495,7 @@ def ColoursConsoleReset(): void
     # Handled in _gvimrc
   endif
 enddef
-# }}}
+#
 # CycleVirtualEdit (Cycle virtualedit local setting) {{{2
 def CycleVirtualEdit(): void
   if &virtualedit == "all"
@@ -526,14 +511,48 @@ def CycleVirtualEdit(): void
     set virtualedit=all
   endif
 enddef
-# 2}}}
+#
+# Find (Simple fuzzy file finder) {{{2
+# Adjusted from a habamax post (includes the var here)
+# This is nice, but could do with a simple max_files limit.
+var files_cache: list<string> = []
+def Find(cmd_arg: string, cmd_complete: bool): list<string>
+  augroup Find
+    au!
+    au CmdlineChanged : wildtrigger()
+    au CmdlineEnter : files_cache = []
+  augroup END
+  if files_cache->empty()
+  files_cache = '**'->globpath('.', 1, 1)
+    ->filter((_, v) => !isdirectory(v))
+    ->mapnew((_, v) => v->substitute('^\.[\/]', "", ""))
+  endif
+  if cmd_arg->empty()
+    return files_cache
+  else
+    return files_cache->matchfuzzy(cmd_arg)
+  endif
+enddef
+#
+# FixSessionFile (Fixes issue of sessions breaking <ScriptCmd> maps) {{{2
+def FixSessionFile(): void
+  try
+    v:this_session
+      ->readfile('b')
+      ->filter('v:val !~ "<ScriptCmd>"')
+      ->writefile(v:this_session, 'b')
+  catch
+    echo v:exception
+  endtry
+enddef
+#
 # LastCursorPos (Go to the last cursor position) {{{2
 def LastCursorPos(): void
   if line("'\"") >= 1 && line("'\"") <= line("$") && &ft !~# 'commit'
     execute "normal! g`\""
   endif
 enddef
-# 2}}}
+#
 # LocationListPat (Populates the location list for {pat} in the buffer) {{{2
 def LocationListPat(line1: number, line2: number, pat: string,
     bang: string): void
@@ -559,7 +578,7 @@ def LocationListPat(line1: number, line2: number, pat: string,
     wincmd p
   endif
 enddef
-# 2}}}
+#
 # NmapShiftEnter (Used only by mapping nnoremap <S-Enter>) {{{2
 def NmapShiftEnter(): void
   const W: string = getwinvar(winnr(), '&buftype')
@@ -570,29 +589,33 @@ def NmapShiftEnter(): void
     silent! execute "norm! \<C-F>"  # behave like the default
   endif
 enddef
-# 2}}}
+#
+# P (used for incidental popup messages) {{{2
+const g:P = (arg: any, t: number = 5000) => {
+  popup_notification(string(arg), {time: t, close: 'button'})
+  }
+#
 # PackAdd (try & catch packadd! a plugin; echo a msg if it fails) {{{2
-def PackAdd(aplugin: string): void
+def PackAdd(package: string): void
   try
     # This must use execute, not just packadd! because of passing the arg
-    execute "packadd! " .. aplugin
+    # NB: Do not use string interpolation because that was not available
+    # until 8.x
+    execute "packadd! " .. package
   catch
-    echo "Could not load plugin " .. aplugin
+    echo "Could not load " .. package
   endtry
 enddef
-# 2}}}
 # PopupModeCode (Generate a popup notification with the mode+state) {{{2
 def PopupModeCode(): void
   popup_notification(mode(1) .. state(), {time: 1200})
 enddef
-# 2}}}
 # SetNumberWidth (Set numberwidth in line with lines in the buffer {{{2
 def SetNumberWidth(): void
   var num_lines = line('$')
   var new_width = len(num_lines) + 2
   execute 'set numberwidth=' .. new_width
 enddef
-# 2}}}
 # ToggleComment (Toggle code commenting of selected/current line) {{{2
 const COMMENT = {'python': '#', 'sh': '#', 'bat': 'REM', 'vbs': "'",
   'omnimark': ';', 'vim': '#', 'json': '\/\/', 'js': '\/\/',
@@ -613,7 +636,6 @@ def ToggleComment(): void
     echo "No comment leader found for filetype."
   endif
 enddef
-# 2}}}
 # ToggleLineNumber (line numbers: literal > relative > none) {{{2
 def ToggleLineNumber(): void
   if !&number
@@ -626,7 +648,6 @@ def ToggleLineNumber(): void
     set norelativenumber
   endif
 enddef
-# 2}}}
 # WindowWrapToggle (Toggle current window wrapping) {{{2
 def WindowWrapToggle(): void
   if &wrap == v:false
@@ -635,7 +656,6 @@ def WindowWrapToggle(): void
     set nowrap
   endif
 enddef
-# 2}}}
 # XfceCustomCursorBlock (XFCE cursor shapes BLOCK) {{{2
 def XfceCustomCursorBlock(): void
   if isdirectory('~/.config/xfce4')
@@ -644,7 +664,6 @@ def XfceCustomCursorBlock(): void
     endif
   endif
 enddef
-# 2}}}
 # XfceCustomCursorIbeam (XFCE cursor shapes IBEAM) {{{2
 def XfceCustomCursorIbeam(): void
   if isdirectory('~/.config/xfce4')
@@ -653,7 +672,6 @@ def XfceCustomCursorIbeam(): void
     endif
   endif
 enddef
-# 2}}}
 # Um? ... g:VimrcGenerateUnicode (Generate Unicode Characters Table) {{{2
 # NB: first and last are decimal values so, e.g, 162 is hexadecimal A2
 def! g:VimrcGenerateUnicode(first: number, last: number): void
@@ -667,16 +685,13 @@ def! g:VimrcGenerateUnicode(first: number, last: number): void
     put c
   endwhile
 enddef
-# 2}}}
-# }}}
-# 06 Mappings {{{
+# 06 Mappings {{{1
 #  <Space> as <Leader> {{{2
 #  Must be set before the mappings that use <Leader>, otherwise <Space> will
 #  be literal (i.e., [count] characters to the right)
 nnoremap <Space> <Nop>
 # Set the <Leader> to be <Space>.  Refer :h mapleader
 g:mapleader = ' '
-# 2}}}
 #  [nore]map — Normal, Visual, Operator Pending modes mappings {{{2
 noremap <silent><Leader>c <ScriptCmd>ToggleComment()<CR>
 noremap <Leader>i <Cmd>exe "set colorcolumn=80 <bar> set textwidth=78"<CR>
@@ -685,16 +700,13 @@ noremap <silent><Leader>l <ScriptCmd>ToggleLineNumber()<CR>
 noremap <silent><Leader>m <ScriptCmd>PopupModeCode()<CR>
 noremap <Leader>v <ScriptCmd>CycleVirtualEdit()<CR>
 noremap <silent><Leader>w <ScriptCmd>WindowWrapToggle()<CR>
-# 2}}}
 # c[nore]map - Command-line mode only mappings {{{2
 cnoremap <C-L> :exe "redrawstatus"<CR>
-# 2}}}
 # i[nore]map — Insert mode only mappings {{{2
 # Bram recommended undo atom
 inoremap <C-U> <C-G>u<C-U>
 # Enter U+0009 with <S-Tab>
 inoremap <S-Tab> <C-Q><Tab>
-# 2}}}
 # n[nore]map — Normal mode only mappings {{{2
 # Make entering digraphs from Normal mode easier, using <C-k>
 nnoremap <C-K> a<C-K>
@@ -714,7 +726,6 @@ nnoremap <S-Enter> <ScriptCmd>NmapShiftEnter()<CR>
 # Other:
 # - Toggle 'rendereroptions' needs GUI, Win32/Win64, and DirectX so -> _gvimrc
 # - vim-popped plugin mapping, gA, is an omnibus ga/g8/etc. command
-# 2}}}
 # x[nore]map — Visual mode only mappings {{{2
 # Use <C-S> for a su "template", with very no magic and _ delimiters.
 xnoremap <C-S> :%s_\v__gc<Left><Left><Left><Left>
@@ -722,7 +733,6 @@ xnoremap <C-S> :%s_\v__gc<Left><Left><Left><Left>
 xnoremap <F8> <Cmd>let &operatorfunc='{t ->getline(".")
   \ ->split("\\zs") ->insert("\"", col("'']")) ->insert("\"", col("''[") - 1)
   \ ->join("") ->setline(".")}'<CR>g@
-# 2}}}
 # *[nore]map — <F9> "mongo" escape mapping - all modes {{{2
 # These are grouped for common sense!
 # <F9> for a mongo toggle between Cmdline and Normal mode from any mode.
@@ -746,7 +756,6 @@ vnoremap <F9> <C-\><C-N>:
 onoremap <F9> <C-\><C-N>:
 cnoremap <F9> <Esc>
 tnoremap <F9> <C-W>c:
-# 2}}}
 # *[nore]map — j/k and <Up>/<Down> "mongo" mapping - several modes {{{2
 # Here, gk and gj are used for for <Up> and <Down> screenwise.
 # Up-down motions default behaviour and comments:
@@ -769,9 +778,10 @@ inoremap <C-Down> <C-O>gj
 inoremap <C-Up> <C-O>gk
 vnoremap <C-Down> gj
 vnoremap <C-Up> gk
-# 2}}}
-# }}}
-# 07 Autocommands {{{
+# helptoc mappings
+nnoremap <Leader>ht <Cmd>HelpToc<CR>
+tnoremap <C-t><C-t> <Cmd>HelpToc<CR>
+# 07 Autocommands {{{1
 # augroup MyColours is defined in 02 Highlights
 # 07.10 Normal mode forced when moving to an unmodifiable buffer {{{2
 #	https://github.com/vim/vim/issues/12072
@@ -786,13 +796,11 @@ if &term =~ '[bw]'
           \ ? ':call feedkeys("\<C-L>")' : ''
   augroup END
 endif
-# 2}}}
 # 07.20 SetNumberWidth() on entering a buffer {{{2
 augroup triggersetnumberwidth
   autocmd!
   autocmd BufEnter * SetNumberWidth()
 augroup END
-# 2}}}
 # 07.30 skeletons (templates) {{{2
 augroup skeletons
   autocmd!
@@ -802,25 +810,27 @@ augroup skeletons
   if filereadable(expand('~/vimfiles/skeleton.txt'))
     autocmd BufNewFile *.txt 0r ~/vimfiles/skeleton.txt
   endif
-augroup END # 2}}}
+augroup END
 # 07.40 vimStartup {{{2
 augroup vimStartup
   autocmd!
   # When editing a file, always jump to the last known cursor position.
   # Don't do it when the position is invalid, when inside an event handler
-  # (happens when dropping a file on gvim) and for a commit message (it's
+  # (happens when dropping a file on gVim) and for a commit message (it's
   # likely a different one than last time).
   autocmd BufReadPost * vim9cmd LastCursorPos()
 augroup END
-# 2}}}
 # 07.50 colorschemes {{{2
 # Define the autocmd for when a colorscheme is changed
 augroup vimrc-ColorScheme
   autocmd!
   autocmd ColorScheme * call ColoursConsoleReset()
 augroup END
-# 2}}}
-# 09.60 [Suppressed] colorschemes {{{2
+# 07.60 SessionWritePost (Fixes sessions breaking <ScriptCmd> maps) {{{2
+if v:versionlong >= 9010207
+  autocmd SessionWritePost * FixSessionFile()
+endif
+# 07.99 [Suppressed] colorschemes {{{2
 # (This was added only to test my vim-tene statusline plugin with gruvbox)
 #augroup colours
 #  autocmd!
@@ -832,94 +842,154 @@ augroup END
 #      g:tene_hi['v'] = 'DiffChange'
 #    }
 #augroup END
-# 2}}}
-# }}}
-# 08 Plugins {{{
+# 08 Plugins {{{1
+# 08.01 Plugin notes {{{2 
+# Debian defaults to nomodeline, but for my plugins I want the modeline - does
+# this work though? TBC
+set modeline
 # Using the native Vim plugin handling. :h packadd
-# * Plugins path:  $HOME/.vim/pack/plugins  $HOME\vimfiles\pack\plugins
-# * To determine the remote git repository: git remote show origin
-# Plugins.  Currently in use indicated with "Y", orig unless "(specifics)":
-#     	https://github.com/madox2/vim-ai
-# "Y" 	https://github.com/kennypete/vim-asciidoctor (habamax fork +)
-#     	https://github.com/kennypete/vim-combining2
+# 08.02 Vim pack/dist/opt plugins {{{2
+if v:versionlong >= 9010837
+  # helptoc
+  packadd! helptoc
+  cnoreabbrev ht HelpToc
+  nnoremap <Leader>ht <Cmd>HelpToc<CR>
+  tnoremap <C-t><C-t> <Cmd>HelpToc<CR>
+  # helpcurwin will be PR-ed shortly to Vim's dist/opt ...
+  packadd! helpcurwin
+  nnoremap <Leader>hc <Plug>HelpCurwinH;
+  cnoreabbrev hc HelpCurwin
+endif
+# 08.03 Independent plugins {{{2
+# In $HOME/.vim/pack/plugins/opt or on Win32 vimfiles rather than .vim
+# https://github.com/markonm/traces.vim
+PackAdd("traces.vim")
+# 	https://github.com/kennypete/vim-combining2
 # "Y" 	https://github.com/kennypete/vim-popped
 # "Y" 	https://github.com/kennypete/vim-sents
-# "Y" 	https://github.com/kennypete/vim9-cpr
-#     	https://github.com/kennypete/vim-characterize (tpope fork +)
-# "Y" 	https://github.com/kennypete/vim-tene
+# 	https://github.com/kennypete/vim-characterize (tpope fork +)
+# 	https://github.com/kennypete/vim-tene
+# "Y" 	https://github.com/kennypete/vim-zline
 # vim-ai - only use where vim9 and Python3 align - not using - commented out
-#if v:versionlong >= 9001499
-#  PackAdd('vim-ai')
-#endif
-g:asciidoctor_allow_uri_read = " -a allow-uri-read"
-PackAdd("vim-asciidoctor")
-PackAdd("vim9-um")
-#nnoremap <Leader>ga <Nop>
-#nnoremap <Leader>d <Plug>ChampPopup;
-#nmap <Leader>gp <Plug>ChampPopup;
-# PackAdd("vim-characterize") # TEMP COMMENTED OUT
+# 08.04 Plugins in development {{{2
+PackAdd("vim9-adoc")
+g:adoc_maps = true
+# PackAdd("vim-sents") # Superseded by vim-um option
 PackAdd("vim-combining2")
-g:borderchars = ['', ' ', '', ' ', '', '', '', '']
+g:borderchars = ['─', '│', '─', '│', '╭', '╮', '╯', '╰']
 PackAdd("vim-popped")
-PackAdd("vim-sents")
-# vim-tene (my own highly configurable and flexible statusline)
+if v:versionlong >= 9002173
+  PackAdd("vim9-um")
+endif
+if v:versionlong >= 9002173
+  PackAdd("vim9-winswap")
+  g:winswap_opt_maps = true
+endif
+# 08.05 vim-tene {{{2
+# COMMENTED - CANNOT BE USED SIMULTANEOUSLY WITH vim-zline
+# RETAINED ONLY FOR TESTING ANY ISSUES RAISED
+#try
+#  # Create the g:tene_ga dictionary, if necessary
+#  g:tene_ga = exists("g:tene_ga") ? g:tene_ga : {}
+#  # Use pilcrow for line numbers ASCII and non-GUI (e.g., PowerShell)
+#  # Commenting these out because FiraCode Mono should be everywhere
+#  # if has("gui_running")
+#     # testing g:tene_ga["line()"] = ['_', '☺️'] # 
+#  # else
+#  #   g:tene_ga["line()"] = ['¶', '¶']
+#  # endif
+#  # if !has("gui_running")
+#    # Use c with caron rather than Nerd font character when PowerShell, et al.
+#    # Commenting these out because FiraCode Mono should be everywhere
+#    # g:tene_ga["virtcol()"] = ['|', 'č']
+#    # g:tene_ga["mod"] = ['[+]', 'м']
+#    # g:tene_ga["noma"] = ['[-]', 'ӿ']
+#    # g:tene_ga["pvw"] = ['[Preview]', '[Preview]']
+#    # g:tene_ga["spell"] = ['S', 'ѕ']
+#    # g:tene_ga["key"] = ['E', 'ю']
+#    # g:tene_ga["paste"] = ['P', 'р']
+#    # g:tene_ga["recording"] = ['@', '@']
+#    # g:tene_ga["ro"] = ['[RO]', 'ф]']
+#  # endif
+#  # Create the g:tene_hi dictionary, if necessary
+#  g:tene_hi = exists("g:tene_hi") ? g:tene_hi : {}
+#  # Override for Inactive statuslines
+#  # g:tene_hi['x'] = 'Conceal'
+#  # Create the g:tene_modes dictionary, if necessary
+#  g:tene_modes = exists("g:tene_modes") ? g:tene_modes : {}
+#  # Override mode name for COMMAND-LINE
+#  g:tene_modes["c"] = "CMDLINE"
+#  # Always show the state(), not just the mode(1)
+#  #g:tene_modestate = true
+#  # Always show the window number (after the buffer number)
+#  #g:tene_window_num = true
+#  # Uncomment to highlight the modified indicator
+#  # g:tene_himod = 1
+#  packadd! vim-tene
+## But, if vim-tene is unavailable or fails, create a basic statusline
+#..
+# COMMENT TO USE vim-tene
+# 08.06 vim-zline {{{2
 try
-  # Create the g:tene_ga dictionary, if necessary
-  g:tene_ga = exists("g:tene_ga") ? g:tene_ga : {}
-  # Use pilcrow for line numbers ASCII and non-GUI (e.g., PowerShell)
-  # Commenting these out because FiraCode Mono should be everywhere
-  # if has("gui_running")
-     # testing g:tene_ga["line()"] = ['_', '☺️'] # 
-  # else
-  #   g:tene_ga["line()"] = ['¶', '¶']
-  # endif
-  # if !has("gui_running")
-    # Use c with caron rather than Nerd font character when PowerShell, et al.
-    # Commenting these out because FiraCode Mono should be everywhere
-    # g:tene_ga["virtcol()"] = ['|', 'č']
-    # g:tene_ga["mod"] = ['[+]', 'м']
-    # g:tene_ga["noma"] = ['[-]', 'ӿ']
-    # g:tene_ga["pvw"] = ['[Preview]', '[Preview]']
-    # g:tene_ga["spell"] = ['S', 'ѕ']
-    # g:tene_ga["key"] = ['E', 'ю']
-    # g:tene_ga["paste"] = ['P', 'р']
-    # g:tene_ga["recording"] = ['@', '@']
-    # g:tene_ga["ro"] = ['[RO]', 'ф]']
-  # endif
-  # Create the g:tene_hi dictionary, if necessary
-  g:tene_hi = exists("g:tene_hi") ? g:tene_hi : {}
-  # Override for Inactive statuslines
-  # g:tene_hi['x'] = 'Conceal'
-  # Create the g:tene_modes dictionary, if necessary
-  g:tene_modes = exists("g:tene_modes") ? g:tene_modes : {}
+  # Create the g:zline_ga dictionary, if necessary
+  g:zline_ga = exists('g:zline_ga') ? g:zline_ga : {}
+  # Create the g:zline_hi dictionary, if necessary
+  g:zline_hi = exists('g:zline_hi') ? g:zline_hi : {}
+  # Create the g:zline_modes dictionary, if necessary
+  g:zline_modes = exists('g:zline_modes') ? g:zline_modes : {}
   # Override mode name for COMMAND-LINE
-  g:tene_modes["c"] = "CMDLINE"
-  # Always show the state(), not just the mode(1)
-  g:tene_modestate = 1
-  # Always show the window number (after the buffer number)
-  g:tene_window_num = 1
-  # Uncomment to highlight the modified indicator
-  # g:tene_himod = 1
-  packadd! vim-tene
-# But, if vim-tene is unavailable or fails, create a basic statusline
+  g:zline_modes['c'] = 'CMDLINE'
+  g:zline_ga['mod'] = '\+'  # Just + in terminal Vim
+  packadd vim-zline
+# But, if vim-zline is unavailable or fails, create a basic statusline
 catch
   set statusline=\ %-6.(%{mode(1)..'\ '..state()}%)\ b%n%<\ %t\ %m\ %r\ %h%=%y
   set statusline+=\ %{&fileencoding}\ %{&fileformat}
   set statusline+=\ %{'¶'..line('.')..'/'..line('$')}\ \|
   set statusline+=%{virtcol('.')}\ U+%B\ 
 endtry
-# }}}
-# 09 Syntax + filetype {{{
+# 09 Syntax + filetype {{{1
 # syntax highlighting - could be 'on' and/or test for t_Co/has('syntax')
 syntax enable
 # Refer :h filetype-overview  -  Current status? Use :filetype
 filetype plugin indent on
 # Set tabs to two spaces in Go and noexpandtab like my default
 autocmd FileType go setlocal noexpandtab tabstop=2 shiftwidth=2
-#}}}
-# 88 Deleted / moved temporally, and commented out {{{
-# }}}
-# 98 Development {{{
+# 10 Cmdline completion {{{1
+# Command line completion as you type - from habamax (modified)
+if v:versionlong >= 9010948
+  set wildcharm=<C-@>
+  def CmdComplete()
+    var trigger = '\v%(\w|[*/:.-=]|\s)$'
+    var exclude = '\v^(\d+|.*s[/,#].*)$'
+    if getchar(1, {number: true}) == 0  # Typehead is empty
+        && !wildmenumode() && getcmdpos() == getcmdline()->len() + 1
+        && getcmdline() =~ trigger && getcmdline() !~ exclude
+      feedkeys("\<C-@>", "ti")
+      SkipCmdlineChanged()  # Suppress redundant completion attempts
+      # Remove <C-@> that get inserted when no items are available
+      timer_start(0, (_) =>
+        getcmdline()->substitute('\%x00', '', 'g')->setcmdline())
+    endif
+  enddef
+  def SkipCmdlineChanged(key = ''): string
+      set eventignore+=CmdlineChanged
+      timer_start(0, (_) => execute('set eventignore-=CmdlineChanged'))
+      return key != '' ? ((pumvisible() ? "\<c-e>" : '') .. key) : ''
+  enddef
+  # Mappings
+  cnoremap <expr> <up> SkipCmdlineChanged("\<up>")
+  cnoremap <expr> <down> SkipCmdlineChanged("\<down>")
+  # CmdlineChanged trigger for completion list
+  augroup CmdComplete
+    au!
+    autocmd CmdlineChanged : CmdComplete()
+  augroup END
+endif
+
+# 88 Deleted / moved temporally, and commented out {{{1
+# ---
+# 98 Development {{{1
 digraphs :) 128512
-# }}}
+# 1}}}
 # vim: cc=+1 et fdm=marker ft=vim sta sts=0 sw=2 ts=8 tw=79

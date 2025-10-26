@@ -1,13 +1,6 @@
-" .gvimrc _gvimrc - vim9-mix - refer :h vim9mix
-if (v:version < 802 || (v:version == 802 && !has('patch3434')))
-  " If the version is before 8.2.3434 do nothing!  That is because
-  " .vimrc/_vimrc uses :source for _vimrc8 and _gvimrc8 for where the version
-  " is before 8.2.3434, so this vim9script should be "ignored".
-  " echom "Ignored"
-  finish
-endif
 vim9script
-# .gvimrc / _gvimrc
+# gVim version checking is done in .vimrc/_vimrc - no version is check needed
+#
 # 01 Windows, WSL, GUI options {{{
 # ----------------------------------------------------------------------------
 # GUI toolbar
@@ -60,35 +53,45 @@ endif
 #}}}
 # 02 Highlights {{{
 g:tene_hi = exists('g:tene_hi') ? g:tene_hi : {}
+g:zline_hi = exists('g:zline_hi') ? g:zline_hi : {}
 # 02.1 Retrobox {{{2
 def g:Retrobox(): void
   colorscheme retrobox
   &background = 'dark'
   g:tene_mode = 0
+  g:zline_mode = false
   hi! StatusLineTerm term=bold,reverse cterm=bold ctermfg=0 ctermbg=10 gui=bold guifg=bg guibg=#98971a
-  #hi link StatusLineTermNC NONE
   hi! link StatusLineTermNC Search
   g:tene_hi['c'] = 'StatusLineTermNC'
   g:tene_hi['i'] = 'DiffText'
   g:tene_hi['n'] = 'MessageWindow'
   g:tene_hi['r'] = 'IncSearch'
   g:tene_hi['v'] = 'Visual'
+  g:zline_hi['c'] = 'StatusLineTermNC'
+  g:zline_hi['i'] = 'DiffText'
+  g:zline_hi['n'] = 'MessageWindow'
+  g:zline_hi['r'] = 'IncSearch'
+  g:zline_hi['v'] = 'Visual'
   hi ModeMsg term=bold cterm=bold gui=bold guifg=darkgrey
-  # See TeneHimod(), which ensures darkorange/orange + indicator
+  # See Himod(), which ensures darkorange/orange + indicator
 enddef
 # 2}}}
 # }}}
 # 03 Settings (global) {{{
-#   columns  Set columns to 80 + 1 (colorcolumn) + 3 (number) + 1 (foldcolumn)
-set columns=85
+#   columns  Set columns to 80 + 1 (colorcolumn) + 5 (number) + 1 (foldcolumn)
+set columns=87
 #   guicursor=  Accept the defaults as they are pretty good
 # Set gvim-specific font to ensure display of special characters.  For WSL the
 # font can be set in WSL Properties dialog (and obviously the font installed).
 # https://www.nerdfonts.com/font-downloads
+# https://mutsuntsai.github.io/fontfreeze/
+# For GUI, prefer my frozen version, otherwise use FiraCode NFM Regular
 if has('gui_gtk3')
-  set guifont=FiraCode\ Nerd\ Font\ Mono\ Regular\ 12,FiraCode\ NFM\ 12
+  set guifont=FiraCode\ Nerd\ Font\ Mono\ Freeze\ 12
+  set guifont+=FiraCode\ Nerd\ Font\ Mono\ Regular\ 12
 elseif has('gui_win32')
-  set guifont=FiraCode_Nerd_Font_Mono:h12,FiraCode_NFM:h12
+  set guifont=FiraCode_Nerd_Font_Mono_Freeze:h12
+  set guifont+=FiraCode_Nerd_Font_Mono_Regular:h12
 endif
 #   guifontset=  Not used, not needed
 #   guiligatures=  Not used, and only applicable to GTK GUI
@@ -110,6 +113,7 @@ set guioptions-=m
 #   t	Include tearoff menu items
 #   T	Include Toolbar
 # customise, useful, tabline - best with vim-tene statusline combination
+# customise, useful, tabline - best with vim-zline statusline combination
 #   guipty  Default used
 set guitablabel=%{%join(tabpagebuflist('%'),'\ ˙\ ')..'\ %t'%}
 #   guitabtooltip  Consider using this.  Maybe a function; make it useful?
@@ -123,7 +127,7 @@ set guitablabel=%{%join(tabpagebuflist('%'),'\ ˙\ ')..'\ %t'%}
 # All of these are in the .vimrc / _vimrc.  There are none needed here
 #   titlestring= This is also set in .vimrc, but it's overridden for gvim here
 set titlestring=%{expand(\"%:p\")}\ %{&modified&&&buftype!='terminal'?'\ +':''}%{&readonly?'\ RO':''}%{(!&modifiable&&mode()!=#'t')?'\ -':''}%{&buftype=='help'?'\ HLP':''}
-# Use PowerShell 7 for the default terminal when using Windows 11 / win64
+# Use PowerShell 7 for the default terminal when using Windows 11 / win64 gVim
 if has('win64')
   set shell=pwsh
 endif
@@ -278,17 +282,25 @@ def HiGUIreset(): void
     g:tene_hi['n'] = 'Visual'
     g:tene_hi['r'] = 'Pmenu'
     g:tene_hi['v'] = 'DiffAdd'
+    # Set g:zline_hi dictionary back to defaults
+    g:zline_hi['c'] = 'StatusLineTermNC'
+    g:zline_hi['i'] = 'WildMenu'
+    g:zline_hi['n'] = 'Visual'
+    g:zline_hi['r'] = 'Pmenu'
+    g:zline_hi['v'] = 'DiffAdd'
   else
     # Do nothing special - only use default!
   endif
 enddef
 
-# TeneHimod, which works for all the in-built colorschemes and should
+# Himod, which works for all the in-built colorschemes and should
 # for any colorscheme (except where orange/darkorange is part of the
 # StatusLine, perhaps (but who'd do that, really?!)
-def TeneHimod(): void
+def Himod(): void
   # Clear teneHimod highlight group
   hi teneHimod NONE
+  # Clear zlineHimod highlight group
+  hi zlineHimod NONE
   # Get the settings from hi StatusLine and adjust for the colorscheme
   redir @s | silent! highlight StatusLine | redir END
   # Create a list with the StatusLine highlight group's settings, ensuring
@@ -307,13 +319,21 @@ def TeneHimod(): void
   finally
     # nothing
   endtry
+  try
+    silent! execute 'hi zlineHimod ' .. join(s_settings)
+  finally
+    # nothing
+  endtry
   # Now add the appropriate guifg or guibg to get the orange + indicator
   var new_teneHimod: string = ''
+  var new_zlineHimod: string = ''
   # Default to guifg being darkorange if there's a dark &bg /orange if light
   if &background == 'dark'
     new_teneHimod = ' guifg=darkorange'
+    new_zlineHimod = ' guifg=darkorange'
   else
     new_teneHimod = ' guifg=orange'
+    new_zlineHimod = ' guifg=orange'
   endif
   # ... but, if there is a gui `reverse` in play, make it guibg as
   # either darkorange or orange, otherwise it will be applied to the wrong
@@ -323,8 +343,10 @@ def TeneHimod(): void
         s_settings[item] == 'gui=reverse')
       if &background == 'dark'
         new_teneHimod = ' guibg=darkorange'
+        new_zlineHimod = ' guibg=darkorange'
       else
         new_teneHimod = ' guibg=orange'
+        new_zlineHimod = ' guibg=orange'
       endif
       break
     endif
@@ -332,6 +354,12 @@ def TeneHimod(): void
   try
     silent! execute 'hi teneHimod ' .. new_teneHimod
     g:tene_hi['himod'] = 'teneHimod'
+  finally
+    # Do nothing
+  endtry
+  try
+    silent! execute 'hi zlineHimod ' .. new_zlineHimod
+    g:zline_hi['+'] = 'zlineHimod'
   finally
     # Do nothing
   endtry
@@ -374,11 +402,12 @@ augroup gvimrc-ColorScheme
   au!
   au GUIEnter * call HiGUIreset()
   # For vim-tene, in the GUI make the himod text darkorange / orange
-  au GUIEnter * call TeneHimod()
+  # For vim-zline, in the GUI make the himod text darkorange / orange
+  au GUIEnter * call Himod()
   au ColorScheme * call HiGUIreset()
   # ... and ensure it's reapplied to the right place (be it guibg or guifg)
   # when the colorscheme changes
-  au ColorScheme * call TeneHimod()
+  au ColorScheme * call Himod()
 augroup END
 # }}}
 # 08 Plugins (include any configuration to them) {{{
@@ -388,6 +417,8 @@ augroup END
 # Plugins.  Currently in use indicated with "Y", orig unless "(specifics)":
 # For vim-tene, colour the modified indicator in the GUI
 g:tene_himod = 1
+# For vim-zline, colour the modified indicator in the GUI
+g:zline_himod = true
 # }}}
 # 09 Syntax + filetype (n/a for gvim specifically?) {{{
 # }}}
