@@ -1,6 +1,11 @@
+" gVim version checking
+" .gvimrc _gvimrc - vim9mix - refer :h vim9mix
+" The echo or popup will be produced by the _vimrc/.vimrc so none is needed
+" with needed this check - just finish if v:versionlong < 8023434
+if !has('patch-8.2.3434')
+  finish
+endif
 vim9script
-# gVim version checking is done in .vimrc/_vimrc - no version is check needed
-#
 # 01 Windows, WSL, GUI options {{{
 # ----------------------------------------------------------------------------
 # GUI toolbar

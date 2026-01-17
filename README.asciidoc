@@ -42,13 +42,13 @@ the `.` versions works well.
 There are only a few things in the Vim9 script `.vimrc` that are not
 compatible with versions before the version 9.0.x.  However, it is possible
 to utilise features in later versions as they come up.  In those instances it
-is necessary to make those only called with a `v:versionlong` conditional
-test.  An example is the option `cdhome`, which was not available until
-version 8.2 with patch 3780:
+is necessary to make those only called with a `has('patch-N.N.NNNN')`
+conditional test.  An example is the option `cdhome`, which was not available
+until version 8.2 with patch 3780:
 
 [source,vimscript]
 ----
-if v:versionlong >= 8023780
+if has('patch-8.2.3780')  # v:versionlong >= 8023780
   set cdhome
 endif
 ----
@@ -86,7 +86,8 @@ by the time the `.gvimrc` is sourced.
 
 == Sections
 
-The `.vimrc` is split into sections:
+The `.vimrc` is split into the following top level sections using fold
+markers:
 
 [horizontal]
 01:: Windows, WSL specific options

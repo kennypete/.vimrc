@@ -1,8 +1,10 @@
 " .vimrc _vimrc - vim9mix - refer :h vim9mix
 " If the version is before 8.2.3434, warn and finish in either a popup or
 " if before 8.1.1705, echo (which generates a dialog box in gVim)
-if (v:version < 802 || (v:version == 802 && !has('patch3434')))
-  if (v:version < 801 || (v:version == 801 && !has('patch1705')))
+" if (v:version < 802 || (v:version == 802 && !has('patch3434')))
+if !has('patch-8.2.3434')
+  " if (v:version < 801 || (v:version == 801 && !has('patch1705')))
+  if !has('patch-8.1.1705')
     echo "No Vim9 script: Use -u & _vimrc8"
   else
     call popup_notification("No Vim9 script: Use -u & _vimrc8", #{time: 8000})
@@ -40,7 +42,7 @@ set t_u7=
 # # Keep cmd.exe as the default terminal in Windows (noting you can
 # # use pwsh from the terminal to start PowerShell anyhow)
 # Mini thesaurus: use if present
-if has("Win32") || has("Win64")
+if has('Win32') || has('Win64')
   if filereadable($HOME .. '\vimfiles\mini-thesaurus.txt')
     set thesaurus=$HOME\vimfiles\mini-thesaurus.txt
   endif
@@ -51,7 +53,7 @@ else
 endif
 # Create the view directory if it doesn't exist
 # Setting option 'viewdir' defaults used here
-if has("Win32") || has("Win64")
+if has('Win32') || has('Win64')
   if !isdirectory(expand($HOME .. '\vimfiles\view'))
     silent! call mkdir($HOME .. '\vimfiles\view', 'p')
   endif
@@ -70,8 +72,8 @@ endif
 #     optimised for Debian 12, WSL, and Vim from PowerShell?
 # First, set the colorscheme to default, which I toyed with changing, but
 # settled with default EVERYWHERE, so this is kind of redundant...
-if !has("gui_running")
-  if has("unix")
+if !has('gui_running')
+  if has('unix')
     colorscheme default
   else
     colorscheme default
@@ -100,7 +102,7 @@ set belloff=backspace,cursor,error,esc,insertmode,showmatch
 #   browsedir  If applicable, incl. Win32, browse the _buffer's_ directory
 set browsedir=buffer
 #   cdhome  :cd, etc., changes current working directory to $HOME, like Linux
-if v:versionlong >= 8023780
+if has('patch-8.2.3780')  # v:versionlong >= 8023780
   set cdhome
 endif
 #   clipboard  Puts Visual mode selected text into selection register "*
@@ -112,36 +114,35 @@ set cmdwinheight=9
 #   colorcolumn  Highlighted column after 'textwidth'; see <leader>I below
 set colorcolumn=+1
 #   columns  This is set for the GUI in gvimrc.  Else, let terminal determine
-#   compatible  Set by many people, but it's unnecessary when there is a
-#               vimrc, noting 'compatible' says:
-#               	"When a vimrc or gvimrc file is found while Vim is
-#               	 starting up, this option is switched off, and all
-#               	 options that have not been modified will be set to
-#               	 the Vim defaults.  Effectively, this means that when
-#               	 a vimrc or gvimrc file exists, Vim will use the Vim
-#               	 defaults...."  Also refer :h compatible-default
+#   compatible  Set by many people, but 'nocompatible' is auto with a vimrc
 #   completeopt  Use menuone and noinsert in addition to the default
 set completeopt=menu,menuone,preview,noinsert
-#   cpoptions  This sets desired Vi 'compatible' option "flags"
-#              Flags added: n	Make wrapped lines appear in 'number' column
-#                           q	:h cpo-q - Joining 3+ lines cursor pos option
+#   cpoptions  This sets desired Vi 'compatible' option flags; I used to set
+#              n and q specifically, but now just run with all Vim defaults.
 #              Defaults:
 #                Vim	aABceFs
 #                Vi	aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>;
-#              Incidental:
-#              1. B, but no b, are Vim defaults.  But it's better using ^V
-#                 Refer :h map_bar - it is the most versatile.
-#              2. An autocommand could be used to re-add nq, but they're not
-#                 a big deal.  So, I'm okay with it reverting to the Vim
-#                 defaults if ":set compatible" does occur, and "set nocp"
-#                 sets it back to not compatible again, less the nq.
-set cpoptions+=nq
+#              Incidental: B flag, but not b, is the Vim default.  But it's
+#                 better using ^V anyway - refer :h map_bar - because it is
+#                 the most versatile.
+# set cpoptions+=nq
 #   cursorline  Highlights all, or just the number, of the cursor's line
 set cursorline
 #   cursorlineopt  Highlight just the number, not the whole line - all modes
 set cursorlineopt=number
 #   delcombine  Using x, <BS>, etc., only deletes combining char in, e.g., a̅
 set delcombine
+#   diffopt  (diff options - these should all be good with >=8.2.3434)
+set diffopt=algorithm:patience
+set diffopt+=closeoff,context:3,filler,indent-heuristic,internal,vertical
+if has('patch-9.1.1009')
+  #   diffopt: Match most similar lines within diff
+  set diffopt+=linematch:84
+endif
+if has('patch-9.1.1243')
+  #   diffopt: Use character-wise diff
+  set diffopt+=inline:char
+endif
 #   display  Show @@@ at start of last buffer line if last para is truncated
 set display=truncate
 #   encoding  Character encoding used inside Vim itself, not files
@@ -164,7 +165,7 @@ set fileformats=unix,dos
 #   fillchars  I prefer more distinctive characters for folds + the vsplit bar
 set fillchars=vert:⏽,fold:-,eob:~,foldopen:┏,foldsep:│,foldclose:╋
     # And add lastline if the version is >=9 with patch 0656
-    if v:versionlong >= 9000656
+    if has('patch-9.0.0656')  # if v:versionlong >= 9000656
       set fillchars+=lastline:@
     endif
 #   foldclose  Automatically close folds when moving out of them
@@ -176,7 +177,7 @@ set foldlevelstart=0
 # set gui* options are in my .gvimrc / _gvimrc
 #   helpheight  Minimum initial height for :h when it opens in a window
 set helpheight=13
-#   hidden  Hide buffers when they are abandoned
+#   hidden  Hide buffers when they are abandoned, don't unload them
 set hidden
 #   history  Keep max lines of command line history (default is only 50)
 set history=5000
@@ -231,7 +232,8 @@ set report=0
 set scrolloff=0
 #   sessionoptions  Things that get saved with :mksession
 #   [Omitted are curdir and sesdir, because they are not needed with autochdir]
-set sessionoptions=blank,buffers,folds,globals,help,localoptions,options,resize,tabpages,terminal,winsize
+set sessionoptions=blank,buffers,folds,globals,help,localoptions,options
+set sessionoptions+=resize,tabpages,terminal,winsize
 # set shell=pwsh
 # set shell  Keep defaults.  If in Windows use PowerShell if wanted _in cmd_
 #   shiftwidth  Number of spaces for each autoindent/tab press
@@ -255,7 +257,7 @@ set sidescrolloff=2
 #   smarttab  Inserts shiftwidth spaces at start of line when <Tab> is pressed
 set smarttab
 #   smoothscroll  Scrolling works w/ screen lines.  (It works earlier but...)
-if v:versionlong >= 9001677
+if has('patch-9.0.1677')  # v:versionlong >= 9001677
   set smoothscroll
 endif
 #   softtabstop  No tabs+spaces!  Use <C-v><Tab> for 	.  (Local; global-ish)
@@ -297,11 +299,11 @@ set wildignorecase
 #   wildmenu  Display completion matches for things like :colorscheme <Tab>
 set wildmenu
 #   wildoptions  Use a popup menu for wildmenu lists, which is nicer (IMO)
-if v:versionlong >= 9010948
+if has('patch-9.1.0948')  # v:versionlong >= 9010948
   set findfunc=Find
   set wildoptions=pum,fuzzy pumheight=12
   set wildmode=noselect:lastused,full
-elseif v:versionlong >= 8024325
+elseif has('patch-8.2.4325')  # v:versionlong >= 8024325
   set wildoptions=pum
 endif
 #   winheight  Minimal number of lines for the current window
@@ -317,7 +319,7 @@ set winminheight=3
 # <C-v><Tab>, which I have mapped, in Insert mode, to Shift-Tab, which is a
 # very easy way of ensuring an actual Tab character can be input but otherwise
 # spaces are used.
-# Global settings that have the defaults accepted {{{2
+# Global settings (defaults accepted) {{{2
 # ----------------------------------------------------------------------------
 # Note, some are commented above to make it 100% clear why they have been
 # defaulted, so those are not listed here.  Key: (d=deprecated) (r=redundant)
@@ -326,7 +328,7 @@ set winminheight=3
 # autoread; autowrite; autowriteall; background; backup; backupcopy;
 # backupdir; backupext; backupskip; balloon*; bioskey (r); breakat;
 # casemap; cdpath; cedit; charconvert; completepopup; confirm; conskey (r);
-# cryptmethod; cscop*; debug; define; dictionary; diff*;
+# cryptmethod; cscop*; debug; define; dictionary; diffanchors; diffexpr;
 # digraph; directory; eadirection; edcompatible; emoji; equalalways;
 # equalprg; errorbells; errorf*; esckeys; eventignore; exrc;
 # fileignorecase; fkmap (r); foldopen; formatprg; fsync;
@@ -467,8 +469,8 @@ command! -nargs=+ -complete=command Redirr redir @p
 # in-built highlight groups, so some need slight tweaking.
 def ColoursConsoleReset(): void
   # default colorscheme overrides (they persist until the colorscheme changes)
-  if !has("gui_running")
-    if g:colors_name == "default"
+  if !has('gui_running')
+    if g:colors_name == 'default'
       # line numbers
       highlight LineNr ctermfg=DarkGrey
       # the line number of the active cursor
@@ -591,7 +593,7 @@ def NmapShiftEnter(): void
 enddef
 #
 # P (used for incidental popup messages) {{{2
-const g:P = (arg: any, t: number = 5000) => {
+const g:P = (arg: any, t: number = 25000) => {
   popup_notification(string(arg), {time: t, close: 'button'})
   }
 #
@@ -778,9 +780,6 @@ inoremap <C-Down> <C-O>gj
 inoremap <C-Up> <C-O>gk
 vnoremap <C-Down> gj
 vnoremap <C-Up> gk
-# helptoc mappings
-nnoremap <Leader>ht <Cmd>HelpToc<CR>
-tnoremap <C-t><C-t> <Cmd>HelpToc<CR>
 # 07 Autocommands {{{1
 # augroup MyColours is defined in 02 Highlights
 # 07.10 Normal mode forced when moving to an unmodifiable buffer {{{2
@@ -827,7 +826,7 @@ augroup vimrc-ColorScheme
   autocmd ColorScheme * call ColoursConsoleReset()
 augroup END
 # 07.60 SessionWritePost (Fixes sessions breaking <ScriptCmd> maps) {{{2
-if v:versionlong >= 9010207
+if has('patch-9.1.0207')  # v:versionlong >= 9010207
   autocmd SessionWritePost * FixSessionFile()
 endif
 # 07.99 [Suppressed] colorschemes {{{2
@@ -849,16 +848,20 @@ endif
 set modeline
 # Using the native Vim plugin handling. :h packadd
 # 08.02 Vim pack/dist/opt plugins {{{2
-if v:versionlong >= 9010837
+if has('patch-9.1.0837')  # v:versionlong >= 9010837
   # helptoc
-  packadd! helptoc
-  cnoreabbrev ht HelpToc
+  packadd helptoc
   nnoremap <Leader>ht <Cmd>HelpToc<CR>
   tnoremap <C-t><C-t> <Cmd>HelpToc<CR>
-  # helpcurwin will be PR-ed shortly to Vim's dist/opt ...
-  packadd! helpcurwin
-  nnoremap <Leader>hc <Plug>HelpCurwinH;
+  cnoreabbrev <expr> ht getcmdtype() == ":" &&
+      \ getcmdline() == 'ht' ? 'HelpToc' : 'ht'
+endif
+if has('patch-8.2.4897')
+  packadd helpcurwin
+  nnoremap <Leader>hc <Plug>HelpCurwin;
   cnoreabbrev hc HelpCurwin
+  cnoreabbrev <expr> hc getcmdtype() == ":" &&
+      \ getcmdline() == 'hc' ? 'HelpCurwin' : 'hc'
 endif
 # 08.03 Independent plugins {{{2
 # In $HOME/.vim/pack/plugins/opt or on Win32 vimfiles rather than .vim
@@ -878,10 +881,10 @@ g:adoc_maps = true
 PackAdd("vim-combining2")
 g:borderchars = ['─', '│', '─', '│', '╭', '╮', '╯', '╰']
 PackAdd("vim-popped")
-if v:versionlong >= 9002173
+if has('patch-9.0.2173')  # v:versionlong >= 9002173
   PackAdd("vim9-um")
 endif
-if v:versionlong >= 9002173
+if has('patch-9.0.2173')  # v:versionlong >= 9002173
   PackAdd("vim9-winswap")
   g:winswap_opt_maps = true
 endif
@@ -931,15 +934,15 @@ endif
 # COMMENT TO USE vim-tene
 # 08.06 vim-zline {{{2
 try
-  # Create the g:zline_ga dictionary, if necessary
-  g:zline_ga = exists('g:zline_ga') ? g:zline_ga : {}
-  # Create the g:zline_hi dictionary, if necessary
-  g:zline_hi = exists('g:zline_hi') ? g:zline_hi : {}
-  # Create the g:zline_modes dictionary, if necessary
+  # Create the g:zline_ga dictionary, if necessary; not needed, accept defaults
+  # g:zline_ga = exists('g:zline_ga') ? g:zline_ga : {}
+  # Create the g:zline_hi dictionary, if necessary; not needed, accept defaults
+  # g:zline_hi = exists('g:zline_hi') ? g:zline_hi : {}
+  # Create the g:zline_modes dictionary, if necessary, and override CMDLINE
   g:zline_modes = exists('g:zline_modes') ? g:zline_modes : {}
-  # Override mode name for COMMAND-LINE
   g:zline_modes['c'] = 'CMDLINE'
-  g:zline_ga['mod'] = '\+'  # Just + in terminal Vim
+  # Show time saved
+  g:zline_buf_time_w = true
   packadd vim-zline
 # But, if vim-zline is unavailable or fails, create a basic statusline
 catch
@@ -957,7 +960,7 @@ filetype plugin indent on
 autocmd FileType go setlocal noexpandtab tabstop=2 shiftwidth=2
 # 10 Cmdline completion {{{1
 # Command line completion as you type - from habamax (modified)
-if v:versionlong >= 9010948
+if has('patch-9.1.0948')  # v:versionlong >= 9010948
   set wildcharm=<C-@>
   def CmdComplete()
     var trigger = '\v%(\w|[*/:.-=]|\s)$'
