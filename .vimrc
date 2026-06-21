@@ -74,7 +74,15 @@ endif
 # settled with default EVERYWHERE, so this is kind of redundant...
 if !has('gui_running')
   if has('unix')
-    colorscheme default
+    colorscheme sorbet
+    # zline highlight groups for sorbet
+    g:zline_hi = exists('g:zline_hi') ? g:zline_hi : {}
+    g:zline_hi['i'] = 'IncSearch'    # Insert
+    g:zline_hi['o'] = 'DiffText'     # Operator-pending
+    g:zline_hi['r'] = 'QuickFixLine' # Replace
+    g:zline_hi['t'] = 'DiffAdd'      # Terminal
+    g:zline_hi['v'] = 'Search'       # Visual
+    g:zline_hi['+'] = 'MatchParen'   # Modified indicator
   else
     colorscheme default
   endif
@@ -106,7 +114,9 @@ if has('patch-8.2.3780')  # v:versionlong >= 8023780
   set cdhome
 endif
 #   clipboard  Puts Visual mode selected text into selection register "*
-set clipboard=autoselect
+if has('clipboard')
+  set clipboard=autoselect
+endif
 #   cmdheight  Makes its height two lines; avoid lots of "press <Enter> to..."
 set cmdheight=2
 #   cmdwinheight  Cmd-line window (q: or :<C-f>) height: +2 more than default
@@ -856,7 +866,7 @@ if has('patch-9.1.0837')  # v:versionlong >= 9010837
   cnoreabbrev <expr> ht getcmdtype() == ":" &&
       \ getcmdline() == 'ht' ? 'HelpToc' : 'ht'
 endif
-if has('patch-8.2.4897')
+if has('patch-9.1.1946') # My PR merged 2025-12-03
   packadd helpcurwin
   nnoremap <Leader>hc <Plug>HelpCurwin;
   cnoreabbrev hc HelpCurwin
