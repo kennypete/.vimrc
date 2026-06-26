@@ -1,3 +1,6 @@
+" kennypete .vimrc (or _vimrc) for versions >= 8.2.3434
+" Last updated: 2026-06-27
+"
 " .vimrc _vimrc - vim9mix - refer :h vim9mix
 " If the version is before 8.2.3434, warn and finish in either a popup or
 " if before 8.1.1705, echo (which generates a dialog box in gVim)
@@ -969,8 +972,9 @@ filetype plugin indent on
 # Set tabs to two spaces in Go and noexpandtab like my default
 autocmd FileType go setlocal noexpandtab tabstop=2 shiftwidth=2
 # 10 Cmdline completion {{{1
-# Command line completion as you type - from habamax (modified)
-if has('patch-9.1.0948')  # v:versionlong >= 9010948
+# Command line completion as you type - from habamax (modified, esp for <Tab>)
+if has('patch-9.1.0948')
+  set wildchar=<Tab>
   set wildcharm=<C-@>
   def CmdComplete()
     var trigger = '\v%(\w|[*/:.-=]|\s)$'
@@ -984,19 +988,32 @@ if has('patch-9.1.0948')  # v:versionlong >= 9010948
       timer_start(0, (_) =>
         getcmdline()->substitute('\%x00', '', 'g')->setcmdline())
     endif
+    # Track whether inside the pum - e.g., if <right>, the pum is exited
+    w:inside_pum = complete_info(['selected']).selected == -1 ? false : true
   enddef
   def SkipCmdlineChanged(key = ''): string
-      set eventignore+=CmdlineChanged
-      timer_start(0, (_) => execute('set eventignore-=CmdlineChanged'))
-      return key != '' ? ((pumvisible() ? "\<c-e>" : '') .. key) : ''
+    set eventignore+=CmdlineChanged
+    timer_start(0, (_) => execute('set eventignore-=CmdlineChanged'))
+    return key != '' ? ((pumvisible() ? "\<c-e>" : '') .. key) : ''
+  enddef
+  # Ensure that one <Tab> enters the pum (otherwise two <Tab>s are needed)
+  def CmdlineTabKey(): string
+    if w:inside_pum
+      return "\<C-@>"
+    endif
+    w:inside_pum = true
+    return "\<C-@>\<C-@>"
   enddef
   # Mappings
   cnoremap <expr> <up> SkipCmdlineChanged("\<up>")
   cnoremap <expr> <down> SkipCmdlineChanged("\<down>")
+  cnoremap <expr> <Tab> CmdlineTabKey()
   # CmdlineChanged trigger for completion list
   augroup CmdComplete
     au!
+    autocmd CmdlineEnter * w:inside_pum = false
     autocmd CmdlineChanged : CmdComplete()
+    autocmd CmdlineLeave * unlet w:inside_pum
   augroup END
 endif
 
