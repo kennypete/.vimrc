@@ -90,13 +90,15 @@ set columns=87
 # font can be set in WSL Properties dialog (and obviously the font installed).
 # https://www.nerdfonts.com/font-downloads
 # https://mutsuntsai.github.io/fontfreeze/
-# For GUI, prefer my frozen version, otherwise use FiraCode NFM Regular
+# For GUI, prefer my frozen version, otherwise use Hack or Liberation Mono
 if has('gui_gtk3')
-  set guifont=FiraCode\ Nerd\ Font\ Mono\ Freeze\ 12
-  set guifont+=FiraCode\ Nerd\ Font\ Mono\ Regular\ 12
+  set guifont+=FiraCode\ Nerd\ Font\ Mono\ Freeze\ 11
+  set guifont+=Hack\ 11
+  set guifont=Liberation\ Mono\ 11
 elseif has('gui_win32')
-  set guifont=FiraCode_Nerd_Font_Mono_Freeze:h12
-  set guifont+=FiraCode_Nerd_Font_Mono_Regular:h12
+  set guifont=FiraCode_Nerd_Font_Mono_Freeze:h11
+  set guifont+=Hack:h11
+  set guifont+=Liberation_Mono:h11
 endif
 #   guifontset=  Not used, not needed
 #   guiligatures=  Not used, and only applicable to GTK GUI
