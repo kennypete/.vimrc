@@ -100,7 +100,7 @@ markers:
 08:: Plugins
 09:: Syntax + filetype
 10:: Cmdline completion
-88:: Deleted
+88:: Deleted ...
 98:: Development
 
 The `.gvimrc` is structured similarly.

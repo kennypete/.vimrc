@@ -113,7 +113,7 @@ set belloff=backspace,cursor,error,esc,insertmode,showmatch
 #   browsedir  If applicable, incl. Win32, browse the _buffer's_ directory
 set browsedir=buffer
 #   cdhome  :cd, etc., changes current working directory to $HOME, like Linux
-if has('patch-8.2.3780')  # v:versionlong >= 8023780
+if has('patch-8.2.3780')
   set cdhome
 endif
 #   clipboard  Puts Visual mode selected text into selection register "*
@@ -270,7 +270,7 @@ set sidescrolloff=2
 #   smarttab  Inserts shiftwidth spaces at start of line when <Tab> is pressed
 set smarttab
 #   smoothscroll  Scrolling works w/ screen lines.  (It works earlier but...)
-if has('patch-9.0.1677')  # v:versionlong >= 9001677
+if has('patch-9.0.1677')
   set smoothscroll
 endif
 #   softtabstop  No tabs+spaces!  Use <C-v><Tab> for 	.  (Local; global-ish)
@@ -312,11 +312,11 @@ set wildignorecase
 #   wildmenu  Display completion matches for things like :colorscheme <Tab>
 set wildmenu
 #   wildoptions  Use a popup menu for wildmenu lists, which is nicer (IMO)
-if has('patch-9.1.0948')  # v:versionlong >= 9010948
+if has('patch-9.1.0948')
   set findfunc=Find
   set wildoptions=pum,fuzzy pumheight=12
   set wildmode=noselect:lastused,full
-elseif has('patch-8.2.4325')  # v:versionlong >= 8024325
+elseif has('patch-8.2.4325')
   set wildoptions=pum
 endif
 #   winheight  Minimal number of lines for the current window
@@ -372,6 +372,7 @@ set nrformats=alpha,hex,bin,unsigned
 set number
 #   nowrap  Prefer to not wrap initially - turn it on if wanted
 set nowrap
+#
 # 04 Commands {{{1
 # B (Goes to first instance of a window of {buffer number} in _any_ tab {{{2
 command! -nargs=1 -complete=command B {
@@ -397,6 +398,7 @@ command! -nargs=1 -complete=command B {
 }
 #command! -nargs=1 -complete=command B
 #      \ silent execute ':call g:VimrcGoToBufferInTab(' .. <f-args> .. ')'
+#
 # Bod {num}? (Deletes all buffers except % or specified {num}) {{{2
 command! -nargs=? -complete=command Bod {
   var k: number = str2nr(<q-args>) == -1 ? bufnr() : str2nr(<q-args>)
@@ -410,6 +412,7 @@ command! -nargs=? -complete=command Bod {
     endif
   endfor
 }
+#
 # Bow {num}? (Wipes out all buffers except % or specified {num}) {{{2
 command! -nargs=? -complete=command Bow {
   var k: number = str2nr(<q-args>) == -1 ? bufnr() : str2nr(<q-args>)
@@ -424,6 +427,7 @@ command! -nargs=? -complete=command Bow {
     endif
   endfor
 }
+#
 # DiffOrig (Displays a diff between the buffer and the file loaded) {{{2
 # A vim9script rendition of, and easier to follow, DiffOrig:
 command! DiffOrig {
@@ -445,19 +449,29 @@ command! DiffOrig {
     endtry
   endif
 }
-# LLP (Location list for {pattern}) {{{2
-command! -bang -nargs=1 -range=% LLP
-      \ LocationListPat(<line1>, <line2>, <q-args>, expand('<bang>'))
+#
 # GenerateUnicode (Generate a Unicode table between two nnnn of U+nnnn) {{{2
 # Usage example:
 # :GenerateUnicode 161, 199
 command! -nargs=+ -complete=command GenerateUnicode
       \ silent execute ':call g:VimrcGenerateUnicode(' .. <q-args> .. ')'
+#
+# LLLoverTW (Location list over &textwidth report on current buffer) {{{2
+command! LLLoverTW LocationListLinesOverTW()
+#
+# LLP (Location list for {pattern}) {{{2
+command! -bang -nargs=1 -range=% LLP
+      \ LocationListPat(<line1>, <line2>, <q-args>, expand('<bang>'))
+#
 # Mb and Gb (Mark/Goto a buffer that's been 'marked') {{{2
 # Mark a buffer and go to a buffer (uses :B command, above)
 g:mbuf = {}
 command! -nargs=1 -complete=command Mb g:mbuf[<q-args>] = bufnr('%')
 command! -nargs=1 -complete=command Gb execute ':B ' .. g:mbuf[<q-args>]
+#
+# QFLoverTW (Quickfix list over &textwidth report on buffers) {{{2
+command! QFLoverTW QuickfixListLinesOverTW()
+#
 # Redirr (Redirect output of a command to register p) {{{2
 # Redirects outputs of a command to the @p register
 # This means, for example, :Redirr filter /S[duh]/ command
@@ -467,7 +481,33 @@ command! -nargs=1 -complete=command Gb execute ':B ' .. g:mbuf[<q-args>]
 command! -nargs=+ -complete=command Redirr redir @p
       \ | silent execute <q-args>
       \ | redir END
+#
+# SQ (“Smart quotes” application: U+201C, U+201D, U+2019) {{{2
+command! -range SQ SmartQuotes(<line1>, <line2>)
+#
 # 05 Functions {{{1
+# ActualDisplayWidth (Determines the true display width ex. concealed) {{{2
+# Used by LocationListLinesOverTW() and QuickfixListLinesOverTW()
+def ActualDisplayWidth(lnum: any): number
+  const LINE: string = lnum->getline()
+  const DISPLAY_WIDTH: number = LINE->strdisplaywidth()
+  var concealed_width: number
+  var col: number = 1
+  while col <= LINE->strcharlen()
+    const CONCEALED: number = synconcealed(lnum, col)[0]
+    const REPLACEMENT: string = synconcealed(lnum, col)[1]
+    if CONCEALED
+      const CHAR: string = LINE->strcharpart(col - 1, 1, 1)
+      concealed_width += CHAR->strdisplaywidth()
+      if !empty(REPLACEMENT)
+        concealed_width -= REPLACEMENT->strdisplaywidth()
+      endif
+    endif
+    col += 1
+  endwhile
+  return DISPLAY_WIDTH - concealed_width
+enddef
+#
 # ColoursConsoleReset (Resets colours when back to Default) {{{2
 # NB: 1. Console only (for GUI refer _gvimrc)
 #     2. Presumes using defaults for terminal (e.g., PowerShell = Campbell)
@@ -568,6 +608,30 @@ def LastCursorPos(): void
   endif
 enddef
 #
+# LocationListLinesOverTW() (Report buffer's lines >&tw ex. concealed) {{{2
+def LocationListLinesOverTW(): void
+  const MAX_WIDTH: number = &textwidth > 0 ? &textwidth : 80
+  final loc_list: list<dict<any>> = []
+  for lnum in 1->range('$'->line())
+    const TRUE_WIDTH: number = ActualDisplayWidth(lnum)
+    if TRUE_WIDTH > MAX_WIDTH
+      add(loc_list, {
+        bufnr: bufnr(),
+        lnum: lnum,
+        col: 1,
+        text: $'exceeds {MAX_WIDTH} chars (display width: {TRUE_WIDTH})'
+      })
+    endif
+  endfor
+  setloclist(0, loc_list, 'r')
+  if !empty(loc_list)
+    echo $'Found {loc_list->len()} line(s) exceeding {MAX_WIDTH} columns'
+    lopen
+  else
+    echo $'No lines exceed {MAX_WIDTH} columns'
+  endif
+enddef
+#
 # LocationListPat (Populates the location list for {pat} in the buffer) {{{2
 def LocationListPat(line1: number, line2: number, pat: string,
     bang: string): void
@@ -621,16 +685,61 @@ def PackAdd(package: string): void
     echo "Could not load " .. package
   endtry
 enddef
+#
 # PopupModeCode (Generate a popup notification with the mode+state) {{{2
 def PopupModeCode(): void
   popup_notification(mode(1) .. state(), {time: 1200})
 enddef
+#
+# QuickfixListLinesOverTW() (Report buffers' lines >&tw ex. concealed) {{{2
+def QuickfixListLinesOverTW(): void
+  const MAX_WIDTH: number = &textwidth > 0 ? &textwidth : 80
+  final qf_list: list<dict<any>> = []
+  const BUFINFO: list<dict<any>> = getbufinfo()
+  for buf in range(0, BUFINFO->len() - 1)
+    if BUFINFO[buf]['name'] =~ '[.]txt$'
+      execute $":buffer {BUFINFO[buf]['bufnr']}"
+      if &filetype == 'help'
+        for lnum in 1->range('$'->line())
+          const TRUE_WIDTH: number = ActualDisplayWidth(lnum)
+          if TRUE_WIDTH > MAX_WIDTH
+            add(qf_list, {
+              bufnr: bufnr(),
+              lnum: lnum,
+              col: 1,
+              text: $'exceeds {MAX_WIDTH} chars (display width: {TRUE_WIDTH})'
+            })
+          endif
+        endfor
+      endif
+    endif
+  endfor
+  setqflist(qf_list, 'r')
+  if !empty(qf_list)
+    echo $'Found {qf_list->len()} line(s) exceeding {MAX_WIDTH} columns'
+    copen
+  else
+    echo $'No lines exceed {MAX_WIDTH} columns'
+  endif
+enddef
+#
 # SetNumberWidth (Set numberwidth in line with lines in the buffer {{{2
 def SetNumberWidth(): void
   var num_lines = line('$')
   var new_width = len(num_lines) + 2
   execute 'set numberwidth=' .. new_width
 enddef
+#
+# SmartQuotes {{{2
+def SmartQuotes(line1: number, line2: number): void
+  silent! execute $":{line1},{line2}" .. 's_\([ (]\)"_\1“_ge'
+  silent! execute $":{line1},{line2}" .. 's_"\([ ,)]\)_”\1_ge'
+  silent! execute $":{line1},{line2}" .. 's_"$_”_ge'
+  silent! execute $":{line1},{line2}" .. "s_'$_’_ge"
+  silent! execute $":{line1},{line2}" .. 's_' .. "'" .. '\([ ,s)]\)_’\1_ge'
+  silent! execute $":{line1},{line2}" .. 's_' .. " '" .. '_ ‘\1_ge'
+enddef
+#
 # ToggleComment (Toggle code commenting of selected/current line) {{{2
 const COMMENT = {'python': '#', 'sh': '#', 'bat': 'REM', 'vbs': "'",
   'omnimark': ';', 'vim': '#', 'json': '\/\/', 'js': '\/\/',
@@ -651,6 +760,7 @@ def ToggleComment(): void
     echo "No comment leader found for filetype."
   endif
 enddef
+#
 # ToggleLineNumber (line numbers: literal > relative > none) {{{2
 def ToggleLineNumber(): void
   if !&number
@@ -663,6 +773,7 @@ def ToggleLineNumber(): void
     set norelativenumber
   endif
 enddef
+#
 # WindowWrapToggle (Toggle current window wrapping) {{{2
 def WindowWrapToggle(): void
   if &wrap == v:false
@@ -671,6 +782,7 @@ def WindowWrapToggle(): void
     set nowrap
   endif
 enddef
+#
 # XfceCustomCursorBlock (XFCE cursor shapes BLOCK) {{{2
 def XfceCustomCursorBlock(): void
   if isdirectory('~/.config/xfce4')
@@ -679,6 +791,7 @@ def XfceCustomCursorBlock(): void
     endif
   endif
 enddef
+#
 # XfceCustomCursorIbeam (XFCE cursor shapes IBEAM) {{{2
 def XfceCustomCursorIbeam(): void
   if isdirectory('~/.config/xfce4')
@@ -687,6 +800,7 @@ def XfceCustomCursorIbeam(): void
     endif
   endif
 enddef
+#
 # Um? ... g:VimrcGenerateUnicode (Generate Unicode Characters Table) {{{2
 # NB: first and last are decimal values so, e.g, 162 is hexadecimal A2
 def! g:VimrcGenerateUnicode(first: number, last: number): void
@@ -700,6 +814,7 @@ def! g:VimrcGenerateUnicode(first: number, last: number): void
     put c
   endwhile
 enddef
+#
 # 06 Mappings {{{1
 #  <Space> as <Leader> {{{2
 #  Must be set before the mappings that use <Leader>, otherwise <Space> will
@@ -707,6 +822,7 @@ enddef
 nnoremap <Space> <Nop>
 # Set the <Leader> to be <Space>.  Refer :h mapleader
 g:mapleader = ' '
+#
 #  [nore]map — Normal, Visual, Operator Pending modes mappings {{{2
 noremap <silent><Leader>c <ScriptCmd>ToggleComment()<CR>
 noremap <Leader>i <Cmd>exe "set colorcolumn=80 <bar> set textwidth=78"<CR>
@@ -715,8 +831,18 @@ noremap <silent><Leader>l <ScriptCmd>ToggleLineNumber()<CR>
 noremap <silent><Leader>m <ScriptCmd>PopupModeCode()<CR>
 noremap <Leader>v <ScriptCmd>CycleVirtualEdit()<CR>
 noremap <silent><Leader>w <ScriptCmd>WindowWrapToggle()<CR>
+#
 # c[nore]map - Command-line mode only mappings {{{2
 cnoremap <C-L> :exe "redrawstatus"<CR>
+#
+# Location list for lines over &textwidth in current buffer
+cnoreabbrev <expr> lll getcmdtype() == ":" &&
+      \ getcmdline() == 'lll' ? 'vim9cmd LocationListLinesOverTW()' : 'lll'
+#
+# Quickfix list for lines over &textwidth in buffers
+cnoreabbrev <expr> qll getcmdtype() == ":" &&
+      \ getcmdline() == 'qll' ? 'vim9cmd QuickfixListLinesOverTW()' : 'qll'
+#
 # i[nore]map — Insert mode only mappings {{{2
 # Bram recommended undo atom
 inoremap <C-U> <C-G>u<C-U>
@@ -744,10 +870,15 @@ nnoremap <S-Enter> <ScriptCmd>NmapShiftEnter()<CR>
 # x[nore]map — Visual mode only mappings {{{2
 # Use <C-S> for a su "template", with very no magic and _ delimiters.
 xnoremap <C-S> :%s_\v__gc<Left><Left><Left><Left>
+#
 # Add quotes around visual selection (w/in line) g@ obj.  (Modified help e.g.)
 xnoremap <F8> <Cmd>let &operatorfunc='{t ->getline(".")
   \ ->split("\\zs") ->insert("\"", col("'']")) ->insert("\"", col("''[") - 1)
   \ ->join("") ->setline(".")}'<CR>g@
+#
+# Smart quotes
+xnoremap <Leader>sq <ScriptCmd>SmartQuotes(<line1>, <line2>)<CR>
+#
 # *[nore]map — <F9> "mongo" escape mapping - all modes {{{2
 # These are grouped for common sense!
 # <F9> for a mongo toggle between Cmdline and Normal mode from any mode.
@@ -771,7 +902,8 @@ vnoremap <F9> <C-\><C-N>:
 onoremap <F9> <C-\><C-N>:
 cnoremap <F9> <Esc>
 tnoremap <F9> <C-W>c:
-# *[nore]map — j/k and <Up>/<Down> "mongo" mapping - several modes {{{2
+#
+# *[nore]map — j/k and <Up>/<Down> 'mongo' mapping - several modes {{{2
 # Here, gk and gj are used for for <Up> and <Down> screenwise.
 # Up-down motions default behaviour and comments:
 #   Normal mode - j/k operate linewise
@@ -793,6 +925,7 @@ inoremap <C-Down> <C-O>gj
 inoremap <C-Up> <C-O>gk
 vnoremap <C-Down> gj
 vnoremap <C-Up> gk
+#
 # 07 Autocommands {{{1
 # augroup MyColours is defined in 02 Highlights
 # 07.10 Normal mode forced when moving to an unmodifiable buffer {{{2
@@ -839,7 +972,7 @@ augroup vimrc-ColorScheme
   autocmd ColorScheme * call ColoursConsoleReset()
 augroup END
 # 07.60 SessionWritePost (Fixes sessions breaking <ScriptCmd> maps) {{{2
-if has('patch-9.1.0207')  # v:versionlong >= 9010207
+if has('patch-9.1.0207')
   autocmd SessionWritePost * FixSessionFile()
 endif
 # 07.99 [Suppressed] colorschemes {{{2
@@ -861,7 +994,7 @@ endif
 set modeline
 # Using the native Vim plugin handling. :h packadd
 # 08.02 Vim pack/dist/opt plugins {{{2
-if has('patch-9.1.0837')  # v:versionlong >= 9010837
+if has('patch-9.1.0837')
   # helptoc
   packadd helptoc
   nnoremap <Leader>ht <Cmd>HelpToc<CR>
@@ -894,10 +1027,10 @@ g:adoc_maps = true
 PackAdd("vim-combining2")
 g:borderchars = ['─', '│', '─', '│', '╭', '╮', '╯', '╰']
 PackAdd("vim-popped")
-if has('patch-9.0.2173')  # v:versionlong >= 9002173
+if has('patch-9.0.2173')
   PackAdd("vim9-um")
 endif
-if has('patch-9.0.2173')  # v:versionlong >= 9002173
+if has('patch-9.0.2173')
   PackAdd("vim9-winswap")
   g:winswap_opt_maps = true
 endif
@@ -972,9 +1105,8 @@ filetype plugin indent on
 # Set tabs to two spaces in Go and noexpandtab like my default
 autocmd FileType go setlocal noexpandtab tabstop=2 shiftwidth=2
 # 10 Cmdline completion {{{1
-# Command line completion as you type - from habamax (modified, esp for <Tab>)
+# Command line completion as you type (based on habamax; modified, esp <Tab>)
 if has('patch-9.1.0948')
-  set wildchar=<Tab>
   set wildcharm=<C-@>
   def CmdComplete()
     var trigger = '\v%(\w|[*/:.-=]|\s)$'
