@@ -837,11 +837,11 @@ cnoremap <C-L> :exe "redrawstatus"<CR>
 #
 # Location list for lines over &textwidth in current buffer
 cnoreabbrev <expr> lll getcmdtype() == ":" &&
-      \ getcmdline() == 'lll' ? 'vim9cmd LocationListLinesOverTW()' : 'lll'
+      \ getcmdline() == 'lll' ? 'LLLoverTW' : 'lll'
 #
 # Quickfix list for lines over &textwidth in buffers
 cnoreabbrev <expr> qll getcmdtype() == ":" &&
-      \ getcmdline() == 'qll' ? 'vim9cmd QuickfixListLinesOverTW()' : 'qll'
+      \ getcmdline() == 'qll' ? 'QFLoverTW' : 'qll'
 #
 # i[nore]map — Insert mode only mappings {{{2
 # Bram recommended undo atom
